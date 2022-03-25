@@ -11,14 +11,17 @@ static struct termios terminal_settings;
 */
 static void terminal_done(void)
 {
-    if (terminal_descriptor != -1)
-        tcsetattr(terminal_descriptor, TCSANOW, &terminal_original);
+  printf("%s", "\x1B[\?1049l");
+  if (terminal_descriptor != -1)
+      tcsetattr(terminal_descriptor, TCSANOW, &terminal_original);
 }
  
 /* "Default" signal handler: restore terminal, then exit.
 */
 static void terminal_signal(int signum)
 {
+
+    printf("%s", "\x1B[\?1049l");
     if (terminal_descriptor != -1)
         tcsetattr(terminal_descriptor, TCSANOW, &terminal_original);
  
@@ -37,6 +40,9 @@ static int terminal_init(void)
 {
     struct sigaction act;
  
+    // TODO: See if this needs to be moved. A bit of abrstraction would be nice
+    printf("%s", "\x1B[\?1049h");
+
     /* Already initialized? */
     if (terminal_descriptor != -1)
         return errno = 0;

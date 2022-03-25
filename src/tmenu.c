@@ -4,21 +4,40 @@
 #include <errno.h>
 #include "minimal.h"
 
+#include <sys/ioctl.h>
+#include <unistd.h>
+
 #include <ctype.h>
 #include "strlist.h"
 
 #define INPUT_CAP 1024
 
 // TODO: Bette data structure
-
 typedef struct tmenu_data {
   FILE *out;
+
+  int out_rows, out_cols;
+  int sel, sel_bg; // White
 
   char *prgname;
   StrList lines;
   char *key;
   int key_len;
 } tmenu;
+
+_Bool str_contains(char *str, char c) {
+  for (int ch = *str; (ch = *(str++));)
+    if (ch == c) return 1;
+  return 0;
+}
+
+void str_rtrim(char *str) {
+  char *mx = str;
+  for (int ch = *str; (ch = *(str++));)
+    if (!str_contains(" \n\r\t", ch))
+        mx = str;
+  *mx = '\0';
+}
 
 StrList read_input(char *inpt) {
   StrList lines = strlist_new(INPUT_CAP);
@@ -29,18 +48,27 @@ StrList read_input(char *inpt) {
     exit(EXIT_FAILURE);
 
   // TODO: trim endline char
-
   char * line = NULL; size_t len = 0;
-  while (getline(&line, &len, fin) != -1)
+  while (getline(&line, &len, fin) != -1) {
+    str_rtrim(line);
     strlist_add(&lines, line);
+  }
   return lines;
 }
 
-
 void list_matches(tmenu *tm) {
-  for (int i=0; i < tm->lines.size; ++i) {
-    if (strstr(tm->lines.index[i], tm->key))
-      fprintf(stdout, "%s", tm->lines.index[i]);
+  char buff[20];
+  sprintf(buff, "%s.%ds\n", "%", tm->out_cols);
+  // TODO: The plus 2 is the input line and a padding at the end. 
+  //            This should be abrtracted
+  int n = 0; // Line count
+  for (int i=0; i < tm->lines.size && n+2 < tm->out_rows; ++i) { 
+    if (strstr(tm->lines.index[i], tm->key)) {
+      if (n == tm->sel) fprintf(stdout, "\x1b[%dm", tm->sel_bg);
+      fprintf(stdout, buff, tm->lines.index[i]);
+      if (n == tm->sel) fprintf(stdout, "\x1b[0m");
+      ++n;
+    }
   }
 }
 
@@ -74,10 +102,13 @@ void del_ch(tmenu *tm) {
 }
 
 void push_result(FILE *sink, tmenu *tm) {
+  int n = 0;
   for (int i=0; i < tm->lines.size; ++i) {
     if (strstr(tm->lines.index[i], tm->key)) {
-      fprintf(sink, "%s", tm->lines.index[i]);
-      return;
+      if (n++ >= tm->sel) {
+        fprintf(sink, "%s\n", tm->lines.index[i]);
+        return;
+      }
     }
   }
 }
@@ -97,21 +128,33 @@ int main(int args, char **argv) {
   tm.key_len = 0;
   tm.lines = read_input(*(argv++)); args--;
 
-  // TODO: If outour file
-  // char *out_fn = *(argv++); args--;
-  // tm.out = fopen(out_fn, "w"); 
-  // if (tm.out == NULL) {
-  //   fprintf(stderr, "Could not open output file '%s'\n", out_fn);
-  //   exit(EXIT_FAILURE);
-  // }
+  tm.sel = 0;
+  tm.sel_bg = 47; // White
 
-  printf("%s", "\x1B[\?1049h"); // TODO: move into teminal_init
+  // TODO: If outour file
+ tm.out = 0;
+  if (args > 0) {
+    char *out_fn = *(argv++); args--;
+    tm.out = fopen(out_fn, "w"); 
+    if (tm.out == NULL) {
+      fprintf(stderr, "Could not open output file '%s'\n", out_fn);
+      exit(EXIT_FAILURE);
+    }
+  } 
+
+
+  struct winsize w;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+  tm.out_rows = w.ws_row;
+  tm.out_cols = w.ws_col;
+
   if (terminal_init()) {
-      if (errno == ENOTTY)
-          fprintf(stderr, "This program requires a terminal.\n");
-      else
-          fprintf(stderr, "Cannot initialize terminal: %s.\n", strerror(errno));
-      return EXIT_FAILURE;
+    if (errno == ENOTTY)
+        fprintf(stderr, "This program requires a terminal.\n");
+    else
+        fprintf(stderr, "Cannot initialize terminal: %s.\n", strerror(errno));
+    return EXIT_FAILURE;
   }
   
   draw_screen(&tm);
@@ -128,7 +171,11 @@ int main(int args, char **argv) {
         else if(c == '[') { // Escape sequence
           switch(c = getc(stdin)) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
+                tm.sel--; if (tm.sel < 0) tm.sel = 0; 
+                draw_screen(&tm); continue; 
             case 'B':  // Arrow Down
+                tm.sel++; if (tm.sel >= tm.out_rows-2 ) tm.sel = tm.out_rows-2; 
+                draw_screen(&tm); continue;
             case 'C':  // Arrow Right
             case 'D':  // Arrow Left
             default: continue;
@@ -138,14 +185,18 @@ int main(int args, char **argv) {
         }
       case '\x0d': // Return
         printf("%s", "\x1B[\?1049l");
-        push_result(stdout, &tm);
+        if (tm.out) {
+            push_result(tm.out, &tm);
+            fclose(tm.out);
+        } else {
+            push_result(stdout, &tm);
+        }
         return EXIT_SUCCESS;
       case '\x7f': // backspace
         del_ch(&tm);
     }
   }
 
-  printf("%s", "\x1B[\?1049l");
   return EXIT_SUCCESS;
 }
 
