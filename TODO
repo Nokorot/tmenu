@@ -1,0 +1,13 @@
+
+- redraw only what is nessesary
+
+- Handle changing terminal size
+
+- Cursor selection
+
+- Capture Ctrl-C and Ctrl-Z
+
+- Flags,  ignore case
+
+
+
