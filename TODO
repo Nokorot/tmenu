@@ -1,4 +1,6 @@
 
+- Don't overflow the selection
+
 - redraw only what is nessesary
 
 - Handle changing terminal size

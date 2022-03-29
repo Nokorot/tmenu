@@ -41,7 +41,7 @@ install() {
 }
 
 run() {
-  ./$EXE "$@"
+   ./$EXE "$@"
 }
 
 clean() {
@@ -65,7 +65,7 @@ if [ -z "$1" ]; then
 else
   case "$1" in
     build|debug)  debug ;;
-    run)          debug && run "$@" ;;
+    run)          debug && { shift; run "$@"; } ;;
     install)      release && install ;;
     clean)        clean ;;
   esac

@@ -20,7 +20,8 @@ typedef struct tmenu_data {
   int sel, sel_bg; // White
 
   char *prgname;
-  StrList lines;
+  StrList lines; // TODO: Store mathces
+
   char *key;
   int key_len;
 } tmenu;
@@ -57,6 +58,8 @@ StrList read_input(char *inpt) {
 }
 
 void list_matches(tmenu *tm) {
+  char *last;
+
   char buff[20];
   sprintf(buff, "%s.%ds\n", "%", tm->out_cols);
   // TODO: The plus 2 is the input line and a padding at the end. 
@@ -68,7 +71,18 @@ void list_matches(tmenu *tm) {
       fprintf(stdout, buff, tm->lines.index[i]);
       if (n == tm->sel) fprintf(stdout, "\x1b[0m");
       ++n;
+      last = tm->lines.index[i];
     }
+  }
+  
+  // TODO: FIX: This is a hack
+  if (n <= tm->sel) {
+    tm->sel = n-1;
+    
+    fprintf(stdout, "\x1b[A");
+    fprintf(stdout, "\x1b[%dm", tm->sel_bg);
+    fprintf(stdout, buff, last);
+    fprintf(stdout, "\x1b[0m");
   }
 }
 
