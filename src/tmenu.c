@@ -1,44 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
+#;include "tmenu.h"
+
 #include "minimal.h"
-
-#include <sys/ioctl.h>
-#include <unistd.h>
-
 #include <ctype.h>
-#include "strlist.h"
-
-#define INPUT_CAP 1024
-
-// TODO: Bette data structure
-typedef struct tmenu_data {
-  FILE *out;
-
-  int out_rows, out_cols;
-  int sel, sel_bg; // White
-
-  char *prgname;
-  StrList lines; // TODO: Store mathces
-
-  char *key;
-  int key_len;
-} tmenu;
-
-_Bool str_contains(char *str, char c) {
-  for (int ch = *str; (ch = *(str++));)
-    if (ch == c) return 1;
-  return 0;
-}
-
-void str_rtrim(char *str) {
-  char *mx = str;
-  for (int ch = *str; (ch = *(str++));)
-    if (!str_contains(" \n\r\t", ch))
-        mx = str;
-  *mx = '\0';
-}
+#include <string.h>
 
 StrList read_input(char *inpt) {
   StrList lines = strlist_new(INPUT_CAP);
@@ -57,16 +21,29 @@ StrList read_input(char *inpt) {
   return lines;
 }
 
+void strlwr(char *str) {
+  for(; *str; ++str)
+    *str = tolower(*str);
+}
+
 void list_matches(tmenu *tm) {
   char *last;
 
-  char buff[20];
+  char buff[20], key[128], tmp[128];
   sprintf(buff, "%s.%ds\n", "%", tm->out_cols);
+
+  strcpy(key, tm->key);
+  if (tm->op.ignore_case) strlwr(key);
+
+
   // TODO: The plus 2 is the input line and a padding at the end. 
   //            This should be abrtracted
   int n = 0; // Line count
   for (int i=0; i < tm->lines.size && n+2 < tm->out_rows; ++i) { 
-    if (strstr(tm->lines.index[i], tm->key)) {
+    strcpy(tmp, tm->lines.index[i]);
+    if (tm->op.ignore_case) strlwr(tmp);
+
+    if (strstr(tmp, key)) {
       if (n == tm->sel) fprintf(stdout, "\x1b[%dm", tm->sel_bg);
       fprintf(stdout, buff, tm->lines.index[i]);
       if (n == tm->sel) fprintf(stdout, "\x1b[0m");
@@ -76,21 +53,15 @@ void list_matches(tmenu *tm) {
   }
   
   // TODO: FIX: This is a hack
-  if (n <= tm->sel) {
+  if (n <= tm->sel && n > 0) {
     tm->sel = n-1;
-    
+
     fprintf(stdout, "\x1b[A");
     fprintf(stdout, "\x1b[%dm", tm->sel_bg);
     fprintf(stdout, buff, last);
     fprintf(stdout, "\x1b[0m");
   }
 }
-
-void usage(char *prgname, FILE *sink) {
-  fprintf(sink, "Usage: %s <input> <output>\n\n", prgname);
-}
-
-#define MAX_KEY_LEN 1024
 
 void draw_screen(tmenu *tm) {
   printf("%s", "\x1b[2J"); // Clear screen
@@ -127,90 +98,59 @@ void push_result(FILE *sink, tmenu *tm) {
   }
 }
 
-int main(int args, char **argv) {
-  tmenu tm;
-  tm.prgname = *(argv++); args--;
-
-  if (args < 1) {
-    fprintf(stderr, "%s\n", "ERROR: Not enough arguments!");
-    usage(tm.prgname, stderr);
-    exit(1);
-  }
-
-  char key[MAX_KEY_LEN]; *key = 0;
-  tm.key = key;
-  tm.key_len = 0;
-  tm.lines = read_input(*(argv++)); args--;
-
-  tm.sel = 0;
-  tm.sel_bg = 47; // White
-
-  // TODO: If outour file
- tm.out = 0;
-  if (args > 0) {
-    char *out_fn = *(argv++); args--;
-    tm.out = fopen(out_fn, "w"); 
-    if (tm.out == NULL) {
-      fprintf(stderr, "Could not open output file '%s'\n", out_fn);
-      exit(EXIT_FAILURE);
-    }
-  } 
-
-
-  struct winsize w;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-  tm.out_rows = w.ws_row;
-  tm.out_cols = w.ws_col;
-
-  if (terminal_init()) {
-    if (errno == ENOTTY)
-        fprintf(stderr, "This program requires a terminal.\n");
-    else
-        fprintf(stderr, "Cannot initialize terminal: %s.\n", strerror(errno));
-    return EXIT_FAILURE;
-  }
-  
-  draw_screen(&tm);
-
+int main_loop(tmenu *tm) {
   _Bool quit = 0;
   for (int c; !quit && (c = getc(stdin)) != EOF;) {
-    if (isalpha(c) || isdigit(c)) 
-        add_ch(&tm, c);
-
+    if (isalpha(c) || isdigit(c))
+        add_ch(tm, c);
+  
     switch (c) {
       case '\x1b': // Escape
         c = getc(stdin);
-        if (c == '\x1b') { quit=1; continue; } // Quit on double escape
+        if (c == '\x1b') return 0; // Quit on double escape
         else if(c == '[') { // Escape sequence
           switch(c = getc(stdin)) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
-                tm.sel--; if (tm.sel < 0) tm.sel = 0; 
-                draw_screen(&tm); continue; 
+                tm->sel--; if (tm->sel < 0) tm->sel = 0; 
+                draw_screen(tm); continue; 
             case 'B':  // Arrow Down
-                tm.sel++; if (tm.sel >= tm.out_rows-2 ) tm.sel = tm.out_rows-2; 
-                draw_screen(&tm); continue;
+                tm->sel++; if (tm->sel >= tm->out_rows-2 ) tm->sel = tm->out_rows-2; 
+                draw_screen(tm); continue;
             case 'C':  // Arrow Right
             case 'D':  // Arrow Left
             default: continue;
           }
         } else if (isalpha(c) || isdigit(c)) {
-          add_ch(&tm, c);
+          add_ch(tm, c);
         }
       case '\x0d': // Return
         printf("%s", "\x1B[\?1049l");
-        if (tm.out) {
-            push_result(tm.out, &tm);
-            fclose(tm.out);
+        if (tm->out) {
+            push_result(tm->out, tm);
+            fclose(tm->out);
         } else {
-            push_result(stdout, &tm);
+            push_result(stdout, tm);
         }
-        return EXIT_SUCCESS;
+        return 0;
       case '\x7f': // backspace
-        del_ch(&tm);
+        del_ch(tm);
     }
   }
-
-  return EXIT_SUCCESS;
+  return 0;
 }
 
+
+
+_Bool str_contains(char *str, char c) {
+  for (int ch = *str; (ch = *(str++));)
+    if (ch == c) return 1;
+  return 0;
+}
+
+void str_rtrim(char *str) {
+  char *mx = str;
+  for (int ch = *str; (ch = *(str++));)
+    if (!str_contains(" \n\r\t", ch))
+        mx = str;
+  *mx = '\0';
+}
