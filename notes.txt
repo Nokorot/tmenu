@@ -1,0 +1,76 @@
+/root/Notes/AlgebraicGeometryNotes.pdf
+/root/Notes/Chern-Weil_Theory/Nicolaescu L. - Lectures on the geometry of manifolds (2007).pdf.pdf
+/root/Notes/J.E. Humphreys - Introduction to Lie algebras and representation theory.pdf
+/root/Notes/KK-theory/2021_WS_KK-theory.pdf
+/root/Notes/KK-theory/Bla98 - Bruce Blackadar - K-Theory for Operator Algebras-Springer (1986).pdf
+/root/Notes/KK-theory/DL08 - Index theory and groupoids.pdf
+/root/Notes/KK-theory/DM20 - K. van den Dungen - Homotopy equivalence in unbounded KK-theory.pdf
+/root/Notes/KK-theory/G.G.Kasparov - The Operator K-Functor and extensions of C-algebras.pdf
+/root/Notes/KK-theory/JT91 - K.K. Jensen - Elements of KK-Theory.pdf
+/root/Notes/KK-theory/Kas80b.pdf
+/root/Notes/KK-theory/KL11 - J. Kaad and M. Lesch - Spectral flow and the unbounded Kasparov product.pdf
+/root/Notes/KK-theory/KL13 - J. Kaad and M. Lesch - Spectral flow and the unbounded Kasparov product.pdf
+/root/Notes/KK-theory/Lan95 - E. Lance - Hilbert C-Modules, a toolkit for operator algebraists.pdf
+/root/Notes/KK-theory/RW98 - Iain Raeburn - Morita Equivalence and Continuous-Trace C-algebras.pdf
+/root/Notes/KK-theory/Talks/2011-KaaLes-paper2-current.pdf
+/root/Notes/KK-theory/Talks/K-Homology.pdf
+/root/Notes/KK-theory/Talks/Kasparov Product I.pdf
+/root/Notes/KK-theory/Talks/Kasparov Product II.pdf
+/root/Notes/KK-theory/Talks/Online_Talks/K-Homology.pdf
+/root/Notes/KK-theory/Talks/Online_Talks/Kasparov Product I.pdf
+/root/Notes/KK-theory/Talks/Online_Talks/Talk_no10_KK-groups_fullnotes.pdf
+/root/Notes/KK-theory/Talks/Online_Talks/Talk_no10_KK-groups_notes.pdf
+/root/Notes/KK-theory/Talks/schedule.pdf
+/root/Notes/KK-theory/Talks/Talk_no10_KK-groups_fullnotes.pdf
+/root/Notes/KK-theory/Talks/Talk_no10_KK-groups_notes.pdf
+/root/Notes/KK-theory/Talks/The unbounded Kasparov product - Christian Kremer.pdf
+/root/Notes/KK-theory/Talks/unbounded KK- theory.pdf
+/root/Notes/KK-theory/tmp/Lan95 - E. Lance - Hilbert C-Modules, a toolkit for operator algebraists.pdf
+/root/Notes/KK-theory/Weg93 - N.E. Wegge-Olsen - K-Theory and C-Algebras - a friendly approach.pdf
+/root/Notes/Robin Hartshorne - Algebraic geometry.pdf
+/root/Notes/Top II/46-Cohomology.pdf
+/root/Notes/Top II/47-Quasi-isomorphism_versus_chain_homotopy_equivalence.pdf
+/root/Notes/Top II/48-UCT_for_cohomology.pdf
+/root/Notes/Top II/49-Cup_product.pdf
+/root/Notes/Top II/50-Commutativity_of_the_cup_product.pdf
+/root/Notes/Top II/50a-Coboundary_formula_for_cup1.pdf
+/root/Notes/Top II/51-Cup_product-First_examples.pdf
+/root/Notes/Top II/52-The_Eilenberg-Zilber_theorem.pdf
+/root/Notes/Top II/52a-AW_chain_property.pdf
+/root/Notes/Top II/53-Boundary_of_shuffles.pdf
+/root/Notes/Top II/54-The_theorem_of_acyclic_models.pdf
+/root/Notes/Top II/55-Proof_of_the_Eilenberg-Zilber_theorem.pdf
+/root/Notes/Top II/56-Commutativity_of_cup_product_revisited.pdf
+/root/Notes/Top II/57-The_algebraic_Künneth_theorem.pdf
+/root/Notes/Top II/58-The_topological_Künneth_theorem_in_homology.pdf
+/root/Notes/Top II/59-Tensor_product_versus_Hom.pdf
+/root/Notes/Top II/60-The_topological_Kunneth_theorem_in_cohomology.pdf
+/root/Notes/Top II/61-Cohomology_ring_of_the_complex_projective_plane.pdf
+/root/Notes/Top II/62-Manifolds.pdf
+/root/Notes/Top II/63-Stiefel_manifolds.pdf
+/root/Notes/Top II/64-Graßmann_manifolds.pdf
+/root/Notes/Top II/65-Orientations_of_manifolds.pdf
+/root/Notes/Top II/66-Homology_vanishing_above_the_dimension.pdf
+/root/Notes/Top II/67-The_fundamental_class.pdf
+/root/Notes/Top II/68-The_mod_2_fundamental_class.pdf
+/root/Notes/Top II/69-The_cap_product.pdf
+/root/Notes/Top II/70-Cohomology_with_compact_support.pdf
+/root/Notes/Top II/71-Covariant_functoriality_of_compactly_supported_cohomology.pdf
+/root/Notes/Top II/72-The_duality_map.pdf
+/root/Notes/Top II/73-Naturality_of_the_duality_map.pdf
+/root/Notes/Top II/74-Mayer-Vietoris_sequence_for_compactly_supported_cohomology.pdf
+/root/Notes/Top II/75-Duality_maps_and_connecting_homomorphisms.pdf
+/root/Notes/Top II/76-Countable_ascending_unions.pdf
+/root/Notes/Top II/77-Poincare_duality.pdf
+/root/Notes/Top II/78-Poincare_duality_with_mod_2_coefficients.pdf
+/root/Notes/Top II/79-Poincare_duality_versus_cup_product.pdf
+/root/Notes/Top II/TopII_typed/l46.pdf
+/root/Notes/Top II/TopII_typed/l57.pdf
+/root/Notes/Top II/TopII_typed/l58.pdf
+/root/Notes/Top II/TopII_typed/l62.pdf
+/root/Notes/Top II/TopII_typed/l63.pdf
+/root/Notes/Top II/TopII_typed/l65.pdf
+/root/Notes/Top II/TopII_typed/l66.pdf
+/root/Notes/Top II/TopII_typed/l67.pdf
+/root/Notes/Top II/TopII_typed/l68.pdf
+/root/Notes/Top II/topology 1 lecture notes.pdf

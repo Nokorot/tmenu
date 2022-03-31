@@ -8,6 +8,7 @@ typedef struct options {
   char *prgname;
 
   bool ignore_case;
+  char *prompt;
 } options;
 
 void usage(FILE *sink, const char *prgname);

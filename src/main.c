@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
 
   bool *help      = flag_bool("help", false, "Print this help to stdout and exit with 0");
   bool *ign_case  = flag_bool("i", false, "Ignore case");
+  char **prompt   = flag_str("p", NULL, "Prompt to be displayed");
 
   if (!flag_parse(argc, argv)) { usage(stderr, op.prgname); flag_print_error(stderr); exit(1); }
   if (*help) { usage(stdout, op.prgname); exit(0); }
@@ -45,6 +46,7 @@ int main(int argc, char **argv) {
   }
 
   op.ignore_case = *ign_case;
+  op.prompt = *prompt;
 
   tmenu tm;
   tm.op = op;
@@ -54,7 +56,8 @@ int main(int argc, char **argv) {
   tm.lines = read_input(*(argv++));
 
   tm.sel = 0;
-  tm.sel_bg = 47; // White
+  // tm.sel_bg = 47; // White
+  tm.sel_bg = 43; //Yellow
 
   tm.out = 0;
   if (*argv) {

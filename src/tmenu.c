@@ -1,4 +1,4 @@
-#;include "tmenu.h"
+#include "tmenu.h"
 
 #include "minimal.h"
 #include <ctype.h>
@@ -71,6 +71,8 @@ void draw_screen(tmenu *tm) {
   list_matches(tm);
 
   printf("%s", "\x1b[1;1H");
+  if (tm->op.prompt)
+    printf("%s ", tm->op.prompt);
   printf("%s", tm->key);
 }
 
@@ -82,8 +84,10 @@ void add_ch(tmenu *tm, char ch) {
 }
 
 void del_ch(tmenu *tm) {
-  tm->key[--tm->key_len] = 0;
-  draw_screen(tm);
+  if (tm->key_len > 0) {
+    tm->key[--tm->key_len] = 0;
+    draw_screen(tm);
+  }
 }
 
 void push_result(FILE *sink, tmenu *tm) {

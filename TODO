@@ -1,15 +1,18 @@
 
-- Don't overflow the selection
-
+- Prompt
+- Color flag
 - redraw only what is nessesary
-
 - Handle changing terminal size
-
-- Cursor selection
-
 - Capture Ctrl-C and Ctrl-Z
 
+
+# Partaly done
+- Cursor selection: Left right
+- Dont overflow the selection, ie. move the selection when sel > #lines
+
+# Done:
 - Flags,  ignore case
+- Cursor selection. Up Down
 
 
 
