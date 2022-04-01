@@ -29,38 +29,45 @@ void strlwr(char *str) {
 void list_matches(tmenu *tm) {
   char *last;
 
-  char buff[20], key[128], tmp[128];
-  sprintf(buff, "%s.%ds\n", "%", tm->out_cols);
+  // TODO: This shuld be done somewhere else.
+  int off;
+  char sel_esc[40], nrm_esc[40];
+  off = getEscCode(tm->op.sf, FOREGROUND_MODE, sel_esc);
+  getEscCode(tm->op.sb, BACKGROUND_MODE, sel_esc+off);
+  off = getEscCode(tm->op.nf, FOREGROUND_MODE, nrm_esc);
+  getEscCode(tm->op.nb, BACKGROUND_MODE, nrm_esc+off);
+
+  char key[128], tmp[128];
 
   strcpy(key, tm->key);
   if (tm->op.ignore_case) strlwr(key);
 
 
-  // TODO: The plus 2 is the input line and a padding at the end. 
+  // TODO: The plus 2 is the input line and a padding at the end.
   //            This should be abrtracted
   int n = 0; // Line count
-  for (int i=0; i < tm->lines.size && n+2 < tm->out_rows; ++i) { 
+  for (int i=0; i < tm->lines.size && n+2 < tm->out_rows; ++i) {
     strcpy(tmp, tm->lines.index[i]);
     if (tm->op.ignore_case) strlwr(tmp);
 
     if (strstr(tmp, key)) {
-      if (n == tm->sel) fprintf(stdout, "\x1b[%dm", tm->sel_bg);
-      fprintf(stdout, buff, tm->lines.index[i]);
-      if (n == tm->sel) fprintf(stdout, "\x1b[0m");
-      ++n;
+      fprintf(stdout, "%s", (n == tm->sel) ? sel_esc : nrm_esc);
+      fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[i]);
       last = tm->lines.index[i];
+      ++n;
     }
   }
-  
+
   // TODO: FIX: This is a hack
   if (n <= tm->sel && n > 0) {
     tm->sel = n-1;
 
     fprintf(stdout, "\x1b[A");
-    fprintf(stdout, "\x1b[%dm", tm->sel_bg);
-    fprintf(stdout, buff, last);
-    fprintf(stdout, "\x1b[0m");
+    fprintf(stdout, "%s%.*s", sel_esc, tm->out_cols, last);
   }
+
+  // Reset at the end
+  fprintf(stdout, "\x1b[0m");
 }
 
 void draw_screen(tmenu *tm) {

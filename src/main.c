@@ -2,10 +2,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 #include "minimal.h"
 #include "tmenu.h"
+
+#include "color.h"
 
 #define FLAG_IMPLEMENTATION
 #include "flag.h"
@@ -34,6 +37,11 @@ int main(int argc, char **argv) {
   bool *ign_case  = flag_bool("i", false, "Ignore case");
   char **prompt   = flag_str("p", NULL, "Prompt to be displayed");
 
+  char **nb_color = flag_str("nb", NULL, "defines the normal background color.  #RGB, #RRGGBB, and X color names are supported.");
+  char **nf_color = flag_str("nf", NULL, "defines the normal foreground color.");
+  char **sb_color = flag_str("sb", NULL, "defines the selected background color.");
+  char **sf_color = flag_str("sf", NULL, "defines the selected foreground color.");
+
   if (!flag_parse(argc, argv)) { usage(stderr, op.prgname); flag_print_error(stderr); exit(1); }
   if (*help) { usage(stdout, op.prgname); exit(0); }
   argv = flag_rest_argv();
@@ -48,8 +56,45 @@ int main(int argc, char **argv) {
   op.ignore_case = *ign_case;
   op.prompt = *prompt;
 
+  if (*nb_color) {
+    if (color24_from_hex(*nb_color, &op.nb) < 0) {
+      fprintf(stderr, "Color argument 'nb' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *nb_color);
+      exit(1);
+    }
+  } else op.nb = color4(false, 9); // TODO: Config file
+
+  if (*nf_color) {
+    if (color24_from_hex(*nf_color, &op.nf) < 0) {
+      fprintf(stderr, "Color argument 'nf' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *nf_color);
+      exit(1);
+    }
+  } else op.nf = color4(false, 9);
+
+  if (*sb_color) {
+    if (color24_from_hex(*sb_color, &op.sb) < 0) {
+      fprintf(stderr, "Color argument 'sb' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *sb_color);
+      exit(1);
+    }
+  } else op.sb = color4(false, 3);
+
+  if (*sf_color) {
+    if (color24_from_hex(*sf_color, &op.sf) < 0) {
+      fprintf(stderr, "Color argument 'sf' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *sf_color);
+      exit(1);
+    }
+  } else op.sf = color4(false, 0);
+
+
+  char sf_esc[20], sb_esc[20];
+  getEscCode(op.sf, FOREGROUND_MODE, sf_esc);
+  getEscCode(op.sf, FOREGROUND_MODE, sf_esc);
+  getEscCode(op.sb, BACKGROUND_MODE, sb_esc);
+  char nf_esc[20], nb_esc[20];
+  getEscCode(op.nf, FOREGROUND_MODE, nf_esc);
+  getEscCode(op.nb, BACKGROUND_MODE, nb_esc);
+
   tmenu tm;
-  tm.op = op;
+  tm.op = op; // NOTE: op is copied here!!
   char key[MAX_KEY_LEN]; *key = 0;
   tm.key = key;
   tm.key_len = 0;
