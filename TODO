@@ -1,8 +1,18 @@
 
-- Multi select
+# Needs to be done and Ideas
+- Following multi select
+        That is, the lines are push when selected and removed from the list.
+        (Removing could also be an option, but then there most be some virsual indication of what has been pushed).
+        This allows the resiving program to act on the selected line in paralell. 
+        But deselecting lines makes no sense anymore.
+
+- Flag for conformation
+        convinient in the case of multiselect
 - Redraw only what is nessesary
 - Handle changing terminal size
 - Capture Ctrl-C and Ctrl-Z
+
+- Realy need to use a beter data structure for StrList
 
 
 # Partaly done
@@ -12,8 +22,7 @@
 
 # Done:
 - Prompt
+- Multi select
 - Flags,  ignore case
 - Cursor selection. Up Down
-
-
 

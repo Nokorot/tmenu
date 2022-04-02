@@ -116,8 +116,10 @@ void push_result(tmenu *tm) {
 
   if (!strlist_rm(&tm->results, sel)) {
     strlist_add(&tm->results, sel);
-    if (tm->out)
-      fprintf(tm->out, "%s\n", sel);
+    // TODO: This does not make sense when you can deselet.
+    //          There shuld be a flag, for doing this. And then the line sould disapere
+    // if (tm->out)
+    //   fprintf(tm->out, "%s\n", sel);
   }
 }
 
@@ -154,15 +156,18 @@ int main_loop(tmenu *tm) {
         continue;
       case '\x0d': // Return
         // if (!tm->op.ms)  // TODO: This shuld be a flag and/or config
-        push_result(tm);
+        // push_result(tm);
+
 
         printf("%s", "\x1B[\?1049l");
-        if (ret_val == 0 && tm.out == 0) {
-          char **str = tm.results.index, **end = str + tm.results.size;
+        char **str = tm->results.index, **end = str + tm->results.size;
+        if (tm->out) {
+          for (; str < end; ++str)
+            fprintf(tm->out, "%s\n", *str);
+          fclose(tm->out);
+        } else {
           for (; str < end; ++str)
             printf("%s\n", *str);
-        } else if (tm.out) {
-          fclose(tm.out);
         }
         return 0;
       case '\x7f': // backspace
