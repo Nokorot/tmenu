@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
   tm.key_len = 0;
   tm.lines = read_input(*(argv++));
   tm.sel = 0;
+  tm.cur = 1;
 
   tm.results = strlist_new(tm.op.ms ? 1024 : 1);
 

@@ -16,7 +16,7 @@ typedef struct tmenu_data {
   FILE *out;
 
   int out_rows, out_cols;
-  int sel;
+  int sel, cur;
 
   StrList lines; // TODO: Store mathces
   StrList results;

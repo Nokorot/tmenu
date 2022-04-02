@@ -86,17 +86,22 @@ void draw_screen(tmenu *tm) {
   if (tm->op.prompt)
     printf("%s ", tm->op.prompt);
   printf("%s", tm->key);
+  printf("\x1b[1;%dH", tm->cur);
 }
 
 void add_ch(tmenu *tm, char ch) {
   tm->key[tm->key_len++] = ch;
-  tm->key[tm->key_len] = 0; 
-  
+  tm->key[tm->key_len] = 0;
+
+  tm->cur++;
   draw_screen(tm);
 }
 
 void del_ch(tmenu *tm) {
-  if (tm->key_len > 0) {
+  // The first case sould imply the second, if not someting is wrong
+  if (tm->cur > 0 && tm->key_len > 0) {
+    for (int i=tm->cur--; ++i < tm->key_len;)
+        tm->key[i-1] = tm->key[i];
     tm->key[--tm->key_len] = 0;
     draw_screen(tm);
   }
@@ -126,9 +131,6 @@ void push_result(tmenu *tm) {
 int main_loop(tmenu *tm) {
   _Bool quit = 0;
   for (int c; !quit && (c = getc(stdin)) != EOF;) {
-    if (isalpha(c) || isdigit(c))
-        add_ch(tm, c);
-  
     switch (c) {
       case '\x1b': // Escape
         c = getc(stdin);
@@ -136,27 +138,41 @@ int main_loop(tmenu *tm) {
         else if(c == '[') { // Escape sequence
           switch(c = getc(stdin)) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
-                tm->sel--; if (tm->sel < 0) tm->sel = 0; 
-                draw_screen(tm); continue; 
-            case 'B':  // Arrow Down
-                tm->sel++; if (tm->sel >= tm->out_rows-2 ) tm->sel = tm->out_rows-2; 
+                tm->sel--; if (tm->sel < 0) tm->sel = 0;
                 draw_screen(tm); continue;
-            case 'C':  // Arrow Right
+            case 'B':  // Arrow Down
+                tm->sel++; if (tm->sel > tm->out_rows-2 ) tm->sel = tm->out_rows-2;
+                draw_screen(tm); continue;
+            case 'C': // Arrow Right
+                tm->cur++;  if (tm->cur > tm->key_len+1) tm->cur = tm->key_len+1;
+                draw_screen(tm); continue;
             case 'D':  // Arrow Left
-            default: continue;
+                tm->cur--;  if (tm->cur < 0) tm->cur = 0;
+                draw_screen(tm); continue;
+            default:
+                continue;
           }
         } else if (isalpha(c) || isdigit(c)) {
           add_ch(tm, c);
         }
       case ' ': // Space
+        // Shift space to write space
         if (tm->op.ms) {
           push_result(tm);
           draw_screen(tm);
+        } else {
+            add_ch(tm, ' ');
         }
         continue;
+      case 'j' & 037: // Ctrl+j
+        tm->sel++; if (tm->sel > tm->out_rows-2 ) tm->sel = tm->out_rows-2;
+        draw_screen(tm); continue;
+      case 'k' & 037: // Ctrl+k
+        tm->sel--; if (tm->sel < 0) tm->sel = 0;
+        draw_screen(tm); continue;
       case '\x0d': // Return
-        // if (!tm->op.ms)  // TODO: This shuld be a flag and/or config
-        // push_result(tm);
+        if (!tm->op.ms)
+          push_result(tm);
 
         printf("%s", "\x1B[\?1049l");
         char **str = tm->results.index, **end = str + tm->results.size;
@@ -171,7 +187,14 @@ int main_loop(tmenu *tm) {
         return 0;
       case '\x7f': // backspace
         del_ch(tm);
+        continue;
     }
+
+    if (isprint(c)) {
+        add_ch(tm, c);
+        continue;
+    }
+
   }
   return 0;
 }
