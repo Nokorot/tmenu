@@ -19,6 +19,7 @@ typedef struct tmenu_data {
   int sel;
 
   StrList lines; // TODO: Store mathces
+  StrList results;
 
   char *key;
   int key_len;
@@ -33,7 +34,7 @@ void del_ch(tmenu *tm);
 int main_loop();
 
 StrList read_input(char *inpt);
-void push_result(FILE *sink, tmenu *tm);
+void push_result(tmenu *tm);
 
 // String utils
 _Bool str_contains(char *str, char c);

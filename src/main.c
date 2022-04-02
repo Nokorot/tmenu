@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
   bool *ign_case  = flag_bool("i", false, "Ignore case");
   char **prompt   = flag_str("p", NULL, "Prompt to be displayed");
 
+  bool *ms  = flag_bool("ms", false, "Multi-select, outputs selected item without exiting, when <Return> is pressed.");
+
   char **nb_color = flag_str("nb", NULL, "defines the normal background color.");
   char **nf_color = flag_str("nf", NULL, "defines the normal foreground color.");
   char **sb_color = flag_str("sb", NULL, "defines the selected background color.");
@@ -68,6 +70,8 @@ int main(int argc, char **argv) {
   tm.op.ignore_case = *ign_case;
   tm.op.prompt = *prompt;
 
+  tm.op.ms = *ms;
+
   color_arg("nb", *nb_color, &tm.op.nb, color4(false, 9)); // Default color
   color_arg("nf", *nf_color, &tm.op.nf, color4(false, 9));
   color_arg("sb", *sb_color, &tm.op.sb, color4(false, 3)); // Yellow
@@ -80,6 +84,8 @@ int main(int argc, char **argv) {
   tm.lines = read_input(*(argv++));
   tm.sel = 0;
 
+  tm.results = strlist_new(tm.op.ms ? 1024 : 1);
+
   tm.out = 0;
   if (*argv) {
     char *out_fn = *(argv++);
@@ -88,7 +94,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Could not open output file '%s'\n", out_fn);
       exit(EXIT_FAILURE);
     }
-  } 
+  }
 
   // TODO: react to window resize
   struct winsize w;
@@ -105,6 +111,7 @@ int main(int argc, char **argv) {
   }
   
   draw_screen(&tm);
-  return main_loop(&tm);
+  int ret_val = main_loop(&tm);
+  return ret_val;
 }
 

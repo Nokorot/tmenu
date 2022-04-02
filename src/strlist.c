@@ -26,9 +26,31 @@ void strlist_add(StrList *slst, const char *str) {
     slst->index[slst->size++] = buff;
 }
 
+void strlist_rm_idx(StrList *sl, int idx) {
+    while (++idx < sl->size)
+        sl->index[idx-1] = sl->index[idx];
+    sl->size--;
+}
+
 void strlist_del(StrList *slst) {
     while (slst->size-- > 0)
         free(slst->index[slst->size]);
     free(slst->index);
 }
 
+char **strlist_find(StrList *sl, const char *str) {
+  char **idx = sl->index, **end = idx + sl->size;
+  for  (;idx < end; ++idx)
+      if (strcmp(*idx, str) == 0)
+          return idx;
+  return NULL;
+}
+
+bool strlist_rm(StrList *slist, const char *str) {
+  char **idx = strlist_find(slist, str);
+  if (idx) {
+    strlist_rm_idx(slist, idx - slist->index);
+    return true;
+  }
+  return false;
+}

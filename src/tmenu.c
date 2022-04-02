@@ -52,7 +52,12 @@ void list_matches(tmenu *tm) {
 
     if (strstr(tmp, key)) {
       fprintf(stdout, "%s", (n == tm->sel) ? sel_esc : nrm_esc);
-      fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[i]);
+
+      if (strlist_find(&tm->results, tmp)) {
+        fprintf(stdout, " * %.*s\n", tm->out_cols, tm->lines.index[i]);
+      } else {
+        fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[i]);
+      }
       last = tm->lines.index[i];
       ++n;
     }
@@ -97,15 +102,22 @@ void del_ch(tmenu *tm) {
   }
 }
 
-void push_result(FILE *sink, tmenu *tm) {
+void push_result(tmenu *tm) {
+  char *sel;
   int n = 0;
   for (int i=0; i < tm->lines.size; ++i) {
     if (strstr(tm->lines.index[i], tm->key)) {
-      if (n++ >= tm->sel) {
-        fprintf(sink, "%s\n", tm->lines.index[i]);
-        return;
+      if (n++ == tm->sel) {
+        sel = tm->lines.index[i];
+        break;
       }
     }
+  }
+
+  if (!strlist_rm(&tm->results, sel)) {
+    strlist_add(&tm->results, sel);
+    if (tm->out)
+      fprintf(tm->out, "%s\n", sel);
   }
 }
 
@@ -134,13 +146,23 @@ int main_loop(tmenu *tm) {
         } else if (isalpha(c) || isdigit(c)) {
           add_ch(tm, c);
         }
+      case ' ': // Space
+        if (tm->op.ms) {
+          push_result(tm);
+          draw_screen(tm);
+        }
+        continue;
       case '\x0d': // Return
+        // if (!tm->op.ms)  // TODO: This shuld be a flag and/or config
+        push_result(tm);
+
         printf("%s", "\x1B[\?1049l");
-        if (tm->out) {
-            push_result(tm->out, tm);
-            fclose(tm->out);
-        } else {
-            push_result(stdout, tm);
+        if (ret_val == 0 && tm.out == 0) {
+          char **str = tm.results.index, **end = str + tm.results.size;
+          for (; str < end; ++str)
+            printf("%s\n", *str);
+        } else if (tm.out) {
+          fclose(tm.out);
         }
         return 0;
       case '\x7f': // backspace

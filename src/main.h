@@ -8,6 +8,8 @@
 typedef struct options {
   char *prgname;
 
+  bool ms;
+
   bool ignore_case;
   char *prompt;
 
