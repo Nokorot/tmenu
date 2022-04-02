@@ -11,6 +11,8 @@
 - Redraw only what is nessesary
 - Handle changing terminal size
 - Capture Ctrl-C and Ctrl-Z
+- Vim keys (when holding alt) / Emacs key
+- Configuration file
 
 - Realy need to use a beter data structure for StrList
 

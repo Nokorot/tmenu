@@ -158,7 +158,6 @@ int main_loop(tmenu *tm) {
         // if (!tm->op.ms)  // TODO: This shuld be a flag and/or config
         // push_result(tm);
 
-
         printf("%s", "\x1B[\?1049l");
         char **str = tm->results.index, **end = str + tm->results.size;
         if (tm->out) {
