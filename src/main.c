@@ -29,80 +29,56 @@ char *shift_args(int *argc, char ***argv)
     return result;
 }
 
+void color_arg(const char *name, char *value, Color *dst, Color dft){
+  if (!value) {
+      *dst = dft; return;
+  }
+  if (color24_from_hex(value, dst) < 0) {
+      fprintf(stderr, "ERROR: Color argument '%s' most be of the form '#RRGGBB' \
+              or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", 
+              name, value);
+      exit(1);
+  }
+}
+
 int main(int argc, char **argv) {
-  options op;
-  op.prgname = *argv;
+  tmenu tm;
+  tm.op.prgname = *argv;
 
   bool *help      = flag_bool("help", false, "Print this help to stdout and exit with 0");
   bool *ign_case  = flag_bool("i", false, "Ignore case");
   char **prompt   = flag_str("p", NULL, "Prompt to be displayed");
 
-  char **nb_color = flag_str("nb", NULL, "defines the normal background color.  #RGB, #RRGGBB, and X color names are supported.");
+  char **nb_color = flag_str("nb", NULL, "defines the normal background color.");
   char **nf_color = flag_str("nf", NULL, "defines the normal foreground color.");
   char **sb_color = flag_str("sb", NULL, "defines the selected background color.");
   char **sf_color = flag_str("sf", NULL, "defines the selected foreground color.");
 
-  if (!flag_parse(argc, argv)) { usage(stderr, op.prgname); flag_print_error(stderr); exit(1); }
-  if (*help) { usage(stdout, op.prgname); exit(0); }
+  if (!flag_parse(argc, argv)) { usage(stderr, tm.op.prgname); flag_print_error(stderr); exit(1); }
+  if (*help) { usage(stdout, tm.op.prgname); exit(0); }
   argv = flag_rest_argv();
   argc = flag_rest_argc();
 
   if (!(*argv)) {
     fprintf(stderr, "%s\n\n", "ERROR: Not enough arguments!");
-    usage(stderr, op.prgname);
+    usage(stderr, tm.op.prgname);
     exit(1);
   }
 
-  op.ignore_case = *ign_case;
-  op.prompt = *prompt;
+  tm.op.ignore_case = *ign_case;
+  tm.op.prompt = *prompt;
 
-  if (*nb_color) {
-    if (color24_from_hex(*nb_color, &op.nb) < 0) {
-      fprintf(stderr, "Color argument 'nb' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *nb_color);
-      exit(1);
-    }
-  } else op.nb = color4(false, 9); // TODO: Config file
-
-  if (*nf_color) {
-    if (color24_from_hex(*nf_color, &op.nf) < 0) {
-      fprintf(stderr, "Color argument 'nf' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *nf_color);
-      exit(1);
-    }
-  } else op.nf = color4(false, 9);
-
-  if (*sb_color) {
-    if (color24_from_hex(*sb_color, &op.sb) < 0) {
-      fprintf(stderr, "Color argument 'sb' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *sb_color);
-      exit(1);
-    }
-  } else op.sb = color4(false, 3);
-
-  if (*sf_color) {
-    if (color24_from_hex(*sf_color, &op.sf) < 0) {
-      fprintf(stderr, "Color argument 'sf' most be of the form '#RRGGBB' or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", *sf_color);
-      exit(1);
-    }
-  } else op.sf = color4(false, 0);
+  color_arg("nb", *nb_color, &tm.op.nb, color4(false, 9)); // Default color
+  color_arg("nf", *nf_color, &tm.op.nf, color4(false, 9));
+  color_arg("sb", *sb_color, &tm.op.sb, color4(false, 3)); // Yellow
+  color_arg("sf", *sf_color, &tm.op.sf, color4(false, 0)); // Black
 
 
-  char sf_esc[20], sb_esc[20];
-  getEscCode(op.sf, FOREGROUND_MODE, sf_esc);
-  getEscCode(op.sf, FOREGROUND_MODE, sf_esc);
-  getEscCode(op.sb, BACKGROUND_MODE, sb_esc);
-  char nf_esc[20], nb_esc[20];
-  getEscCode(op.nf, FOREGROUND_MODE, nf_esc);
-  getEscCode(op.nb, BACKGROUND_MODE, nb_esc);
-
-  tmenu tm;
-  tm.op = op; // NOTE: op is copied here!!
   char key[MAX_KEY_LEN]; *key = 0;
   tm.key = key;
   tm.key_len = 0;
   tm.lines = read_input(*(argv++));
-
   tm.sel = 0;
-  // tm.sel_bg = 47; // White
-  tm.sel_bg = 43; //Yellow
 
   tm.out = 0;
   if (*argv) {

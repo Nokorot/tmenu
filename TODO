@@ -1,4 +1,5 @@
 
+- Multi select
 - Redraw only what is nessesary
 - Handle changing terminal size
 - Capture Ctrl-C and Ctrl-Z
