@@ -1,5 +1,19 @@
 
+Note: 
+If tmenu outputs the current content of the entry at each key press, 
+the list could be adjuted acording to what is written. This could be 
+used for more advanced autocompletion. 
+    For example:  new with names like anything_%date, 
+    where anythng_%date is added to the list when the % sign is added
+In this case a clear signal might be usefull and/or a (-r) remove pipe/file. 
+
+This would also requite, the input file to be read, on a different thread or
+checked each time a character is entered.
+
+
 # Needs to be done and Ideas
+
+- Free writing result.
 - Following multi select
         That is, the lines are push when selected and removed from the list.
         (Removing could also be an option, but then there most be some virsual indication of what has been pushed).

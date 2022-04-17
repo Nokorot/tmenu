@@ -4,9 +4,6 @@
 #include <termios.h>
 #include <unistd.h>
  
-struct termios terminal_original;
-struct termios terminal_settings;
- 
 /* Restore terminal to original settings
 */
 void terminal_done();

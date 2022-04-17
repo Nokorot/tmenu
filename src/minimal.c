@@ -5,6 +5,9 @@
 #include <errno.h>
 #include <signal.h>
 
+struct termios terminal_original;
+struct termios terminal_settings;
+
 int terminal_descriptor = -1;
 
 void terminal_done() {
