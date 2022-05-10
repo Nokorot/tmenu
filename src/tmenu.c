@@ -26,6 +26,18 @@ void strlwr(char *str) {
     *str = tolower(*str);
 }
 
+char *cur_sel(tmenu *tm) {
+  int n = 0;
+  for (int i=0; i < tm->lines.size; ++i) {
+    if (strstr(tm->lines.index[i], tm->key)) {
+      if (n++ == tm->sel) {
+        return tm->lines.index[i];
+      }
+    }
+  }
+  return NULL;
+}
+
 void list_matches(tmenu *tm) {
   char *last;
 
@@ -76,6 +88,11 @@ void list_matches(tmenu *tm) {
 }
 
 void draw_screen(tmenu *tm) {
+  if (tm->op.pv) {
+    fprintf(tm->op.pv, "%s\n", cur_sel(tm));
+    fflush(tm->op.pv);
+  }
+
   printf("%s", "\x1b[2J"); // Clear screen
 
   // TODO: remember corsor position. Might want to allow left and right movement
@@ -108,16 +125,7 @@ void del_ch(tmenu *tm) {
 }
 
 void push_result(tmenu *tm) {
-  char *sel;
-  int n = 0;
-  for (int i=0; i < tm->lines.size; ++i) {
-    if (strstr(tm->lines.index[i], tm->key)) {
-      if (n++ == tm->sel) {
-        sel = tm->lines.index[i];
-        break;
-      }
-    }
-  }
+  char *sel = cur_sel(tm);
 
   if (!strlist_rm(&tm->results, sel)) {
     strlist_add(&tm->results, sel);

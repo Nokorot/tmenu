@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
   bool *help      = flag_bool("help", false, "Print this help to stdout and exit with 0");
   bool *ign_case  = flag_bool("i", false, "Ignore case");
   char **prompt   = flag_str("p", NULL, "Prompt to be displayed");
+  char **pv       = flag_str("pv", NULL, "Preview, output current selection");
 
   bool *ms  = flag_bool("ms", false, "Multi-select, outputs selected item without exiting, when <Return> is pressed.");
 
@@ -90,9 +91,18 @@ int main(int argc, char **argv) {
   tm.out = 0;
   if (*argv) {
     char *out_fn = *(argv++);
-    tm.out = fopen(out_fn, "w"); 
+    tm.out = fopen(out_fn, "w");
     if (tm.out == NULL) {
       fprintf(stderr, "Could not open output file '%s'\n", out_fn);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  tm.op.pv = 0;
+  if (*pv) {
+    tm.op.pv = fopen(*pv, "w");
+    if (tm.op.pv == NULL) {
+      fprintf(stderr, "Could not open preview file '%s'\n", *pv);
       exit(EXIT_FAILURE);
     }
   }

@@ -13,6 +13,8 @@ typedef struct options {
   bool ignore_case;
   char *prompt;
 
+  FILE *pv;
+
   Color nb, nf, sb, sf;
 } options;
 
