@@ -87,6 +87,8 @@ void list_matches(tmenu *tm) {
   fprintf(stdout, "\x1b[0m");
 }
 
+// TODO: dirty paramenter
+
 void draw_screen(tmenu *tm) {
   if (tm->op.pv) {
     fprintf(tm->op.pv, "%s\n", cur_sel(tm));
@@ -136,6 +138,28 @@ void push_result(tmenu *tm) {
   }
 }
 
+void move_sel(tmenu *tm, int amount) {
+    tm->sel += amount;
+
+    if (tm->sel < 0)
+        tm->sel = 0;
+    else if (tm->sel > tm->out_rows-2 )
+        tm->sel = tm->out_rows-2;
+
+    draw_screen(tm);
+}
+
+void move_cur(tmenu *tm, int amount) {
+    tm->cur += amount;
+
+    if (tm->cur < 0)
+        tm->cur = 0;
+    else if (tm->cur > tm->key_len+1)
+        tm->cur = tm->key_len+1;
+
+    draw_screen(tm);
+}
+
 int main_loop(tmenu *tm) {
   _Bool quit = 0;
   for (int c; !quit && (c = getc(stdin)) != EOF;) {
@@ -146,17 +170,13 @@ int main_loop(tmenu *tm) {
         else if(c == '[') { // Escape sequence
           switch(c = getc(stdin)) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
-                tm->sel--; if (tm->sel < 0) tm->sel = 0;
-                draw_screen(tm); continue;
+                move_sel(tm, -1); continue;
             case 'B':  // Arrow Down
-                tm->sel++; if (tm->sel > tm->out_rows-2 ) tm->sel = tm->out_rows-2;
-                draw_screen(tm); continue;
+                move_sel(tm,  1); continue;
             case 'C': // Arrow Right
-                tm->cur++;  if (tm->cur > tm->key_len+1) tm->cur = tm->key_len+1;
-                draw_screen(tm); continue;
+                move_cur(tm,  1); continue;
             case 'D':  // Arrow Left
-                tm->cur--;  if (tm->cur < 0) tm->cur = 0;
-                draw_screen(tm); continue;
+                move_cur(tm, -1); continue;
             default:
                 continue;
           }
@@ -167,17 +187,17 @@ int main_loop(tmenu *tm) {
         // Shift space to write space
         if (tm->op.ms) {
           push_result(tm);
-          draw_screen(tm);
+          move_sel(tm, +1);
+          // NOTE: Not needed, since it is done by move_sel
+          // draw_screen(tm);
         } else {
             add_ch(tm, ' ');
         }
         continue;
       case 'j' & 037: // Ctrl+j
-        tm->sel++; if (tm->sel > tm->out_rows-2 ) tm->sel = tm->out_rows-2;
-        draw_screen(tm); continue;
+        move_sel(tm, +1); continue;
       case 'k' & 037: // Ctrl+k
-        tm->sel--; if (tm->sel < 0) tm->sel = 0;
-        draw_screen(tm); continue;
+        move_sel(tm, -1); continue;
       case '\x0d': // Return
         if (!tm->op.ms)
           push_result(tm);
