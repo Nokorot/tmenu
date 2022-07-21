@@ -16,8 +16,9 @@ StrList read_input(char *inpt) {
   char * line = NULL; size_t len = 0;
   while (getline(&line, &len, fin) != -1) {
     str_rtrim(line);
-    strlist_add(&lines, line);
+    strlist_add(&lines, line, 2);
   }
+
   return lines;
 }
 
@@ -27,15 +28,8 @@ void strlwr(char *str) {
 }
 
 char *cur_sel(tmenu *tm) {
-  int n = 0;
-  for (int i=0; i < tm->lines.size; ++i) {
-    if (strstr(tm->lines.index[i], tm->key)) {
-      if (n++ == tm->sel) {
-        return tm->lines.index[i];
-      }
-    }
-  }
-  return NULL;
+  int idx = tm->matches[tm->sel];
+  return tm->lines.index[idx];
 }
 
 void list_matches(tmenu *tm) {
@@ -49,39 +43,32 @@ void list_matches(tmenu *tm) {
   off = getEscCode(tm->op.nf, FOREGROUND_MODE, nrm_esc);
   getEscCode(tm->op.nb, BACKGROUND_MODE, nrm_esc+off);
 
-  char key[MAX_KEY_LEN], tmp[MAC_LINE_LENGTH];
+  // TODO: Option
+  int rows = tm->out_rows - 2;
+  int page = tm->sel / rows;
 
-  strcpy(key, tm->key);
-  if (tm->op.ignore_case) strlwr(key);
+  int i=page*rows , *idx = tm->matches+i;
 
+  for (; i < tm->matches_count && i < (page+1)*rows; ++i, ++idx) {
+    fprintf(stdout, "%s", (i == tm->sel) ? sel_esc : nrm_esc);
 
-  // TODO: The plus 2 is the input line and a padding at the end.
-  //            This should be abrtracted
-  int n = 0; // Line count
-  for (int i=0; i < tm->lines.size && n+2 < tm->out_rows; ++i) {
-    strcpy(tmp, tm->lines.index[i]);
-    if (tm->op.ignore_case) strlwr(tmp);
-
-    if (strstr(tmp, key)) {
-      fprintf(stdout, "%s", (n == tm->sel) ? sel_esc : nrm_esc);
-
-      if (strlist_find(&tm->results, tmp)) {
-        fprintf(stdout, " * %.*s\n", tm->out_cols, tm->lines.index[i]);
-      } else {
-        fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[i]);
-      }
-      last = tm->lines.index[i];
-      ++n;
+    // Note: in stead of a list of strings, we should have a list of structs,
+    // with a flag, indicating wheter it is selected
+    if (strlist_find(&tm->results, tm->lines.index[*idx])) {
+      fprintf(stdout, " * %.*s\n", tm->out_cols, tm->lines.index[*idx]);
+    } else {
+      fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[*idx]);
     }
+    last = tm->lines.index[i];
   }
 
   // TODO: FIX: This is a hack
-  if (n <= tm->sel && n > 0) {
-    tm->sel = n-1;
+  // if (i <= tm->sel && i > 0) {
+  //   tm->sel = i-1;
 
-    fprintf(stdout, "\x1b[A");
-    fprintf(stdout, "%s%.*s", sel_esc, tm->out_cols, last);
-  }
+  //   fprintf(stdout, "\x1b[A");
+  //   fprintf(stdout, "%s%.*s", sel_esc, tm->out_cols, last);
+  // }
 
   // Reset at the end
   fprintf(stdout, "\x1b[0m");
@@ -108,20 +95,31 @@ void draw_screen(tmenu *tm) {
   printf("\x1b[1;%dH", tm->cur);
 }
 
+void update_matches(tmenu *tm) {
+  tm->matches_count = strlist_match(&tm->lines, tm->key, tm->matches);
+}
+
+
 void add_ch(tmenu *tm, char ch) {
   tm->key[tm->key_len++] = ch;
   tm->key[tm->key_len] = 0;
 
   tm->cur++;
+  update_matches(tm);
   draw_screen(tm);
 }
 
-void del_ch(tmenu *tm) {
+void del_ch(tmenu *tm, int index) {
+  if (index < 0)
+      index = tm->cur;
+
   // The first case sould imply the second, if not someting is wrong
-  if (tm->cur > 0 && tm->key_len > 0) {
-    for (int i=tm->cur--; ++i < tm->key_len;)
+  if (index > 0 && index < tm->key_len+2 && tm->key_len > 0) {
+    for (int i=index; ++i < tm->key_len;)
         tm->key[i-1] = tm->key[i];
     tm->key[--tm->key_len] = 0;
+
+    update_matches(tm);
     draw_screen(tm);
   }
 }
@@ -130,7 +128,7 @@ void push_result(tmenu *tm) {
   char *sel = cur_sel(tm);
 
   if (!strlist_rm(&tm->results, sel)) {
-    strlist_add(&tm->results, sel);
+    strlist_add(&tm->results, sel, 2);
     // TODO: This does not make sense when you can deselet.
     //          There shuld be a flag, for doing this. And then the line sould disapere
     // if (tm->out)
@@ -138,22 +136,31 @@ void push_result(tmenu *tm) {
   }
 }
 
-void move_sel(tmenu *tm, int amount) {
-    tm->sel += amount;
-
-    if (tm->sel < 0)
-        tm->sel = 0;
-    else if (tm->sel > tm->out_rows-2 )
-        tm->sel = tm->out_rows-2;
+void set_sel(tmenu *tm, int index) {
+    if (index < 0 || index > tm->matches_count-1)
+        tm->sel = tm->matches_count-1;
+    else
+        tm->sel = index;
 
     draw_screen(tm);
 }
 
+void move_sel(tmenu *tm, int amount) {
+    tm->sel += amount;
+
+    if (tm->sel < 0) tm->sel = 0;
+    // else if (tm->sel > tm->out_rows-2 )
+    else if (tm->sel > tm->matches_count-1 )
+        tm->sel = tm->matches_count-1;
+
+    draw_screen(tm);
+}
+
+
 void move_cur(tmenu *tm, int amount) {
     tm->cur += amount;
 
-    if (tm->cur < 0)
-        tm->cur = 0;
+    if (tm->cur < 1) tm->cur = 1;
     else if (tm->cur > tm->key_len+1)
         tm->cur = tm->key_len+1;
 
@@ -161,6 +168,9 @@ void move_cur(tmenu *tm, int amount) {
 }
 
 int main_loop(tmenu *tm) {
+  update_matches(tm);
+  draw_screen(tm);
+
   _Bool quit = 0;
   for (int c; !quit && (c = getc(stdin)) != EOF;) {
     switch (c) {
@@ -168,7 +178,28 @@ int main_loop(tmenu *tm) {
         c = getc(stdin);
         if (c == '\x1b') return 0; // Quit on double escape
         else if(c == '[') { // Escape sequence
-          switch(c = getc(stdin)) { // TODO: handle escape sequences properly
+          c = getc(stdin);
+
+          int keycode = 1;
+          if (isdigit(c)) {
+              keycode = c-'0';
+              c = getc(stdin);
+              while (isdigit(c)) {
+                keycode = keycode*10 + c-'0';
+                c = getc(stdin);
+              }
+          }
+
+          int modifyer = 1;
+          if (c == ';') {
+              modifyer = 0;
+              while (isdigit(c = getc(stdin))) {
+                modifyer = modifyer*10 + c-'0';
+              }
+          }
+          // printf("%d", modifyer);
+
+          switch(c) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
                 move_sel(tm, -1); continue;
             case 'B':  // Arrow Down
@@ -177,10 +208,45 @@ int main_loop(tmenu *tm) {
                 move_cur(tm,  1); continue;
             case 'D':  // Arrow Left
                 move_cur(tm, -1); continue;
+            case 'F': // End
+                set_sel(tm, -1); continue;
+            case 'H': // Home
+                set_sel(tm, 0); continue;
+            case 10: // Alt + Retrun
+                // Might want to use this for someting else.
+                if (tm->op.ms) {
+                  push_result(tm);
+                  move_sel(tm, +1);
+                  // NOTE: Not needed, since it is done by move_sel
+                  // draw_screen(tm);
+                }
+                continue;
+            case '~':
+                int rows = tm->out_rows - 2;
+                // TODO: page function;
+                switch (keycode) {
+                    case 3: // delete
+                        // move_cur(tm,  1);
+                        del_ch(tm, tm->cur+1);
+                        continue;
+                    case 5: // page up
+                        // Move one page up
+                        move_sel(tm, -rows); continue;
+                    case 6: // page down
+                        // Movie one page down
+                        move_sel(tm, rows); continue;
+                    default:
+                        printf("%d", keycode);
+                        // Not suported
+                        continue;
+                }
             default:
                 continue;
           }
         } else if (isalpha(c) || isdigit(c)) {
+           // NOTE: This is alt+<key>
+           //  Would be nice to use for custum keybindings
+
           add_ch(tm, c);
         }
       case ' ': // Space
@@ -214,7 +280,8 @@ int main_loop(tmenu *tm) {
         }
         return 0;
       case '\x7f': // backspace
-        del_ch(tm);
+        del_ch(tm, tm->cur);
+        move_cur(tm, -1);
         continue;
     }
 

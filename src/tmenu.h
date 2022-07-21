@@ -20,6 +20,10 @@ typedef struct tmenu_data {
   int out_rows, out_cols;
   int sel, cur;
 
+  int *matches;
+  int matches_count;
+  int matches_cap;
+
   StrList lines; // TODO: Store mathces
   StrList results;
 
@@ -31,7 +35,7 @@ void draw_screen(tmenu *tm);
 
 void list_matches(tmenu *tm);
 void add_ch(tmenu *tm, char ch);
-void del_ch(tmenu *tm);
+void del_ch(tmenu *tm, int index);
 
 int main_loop();
 

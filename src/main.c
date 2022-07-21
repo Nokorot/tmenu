@@ -8,6 +8,8 @@
 #include "minimal.h"
 #include "tmenu.h"
 
+#include "strlist.h"
+
 #include "color.h"
 
 #define FLAG_IMPLEMENTATION
@@ -35,7 +37,7 @@ void color_arg(const char *name, char *value, Color *dst, Color dft){
   }
   if (color24_from_hex(value, dst) < 0) {
       fprintf(stderr, "ERROR: Color argument '%s' most be of the form '#RRGGBB' \
-              or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n", 
+              or '#RGB' (where R, G and B are hex digits), but got instead '%s'\n",
               name, value);
       exit(1);
   }
@@ -79,10 +81,13 @@ int main(int argc, char **argv) {
   color_arg("sf", *sf_color, &tm.op.sf, color4(false, 0)); // Black
 
 
+  // Initialize tmenu_data
   char key[MAX_KEY_LEN]; *key = 0;
   tm.key = key;
   tm.key_len = 0;
   tm.lines = read_input(*(argv++));
+  tm.matches = (int*) malloc(sizeof(int)*tm.lines.size);
+  tm.matches_cap = tm.lines.size;
   tm.sel = 0;
   tm.cur = 1;
 
@@ -120,8 +125,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Cannot initialize terminal: %s.\n", strerror(errno));
     return EXIT_FAILURE;
   }
-  
-  draw_screen(&tm);
+
+
   int ret_val = main_loop(&tm);
   return ret_val;
 }
