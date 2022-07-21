@@ -6,8 +6,10 @@
 #include "main.h"
 #include "strlist.h"
 
+// TODO: Trim line to this length ?
+#define MAC_LINE_LENGTH 1024
 #define MAX_KEY_LEN 1024
-#define INPUT_CAP 1024
+#define INPUT_CAP 1024*1024
 
 // TODO: Bette data structure
 typedef struct tmenu_data {

@@ -49,7 +49,7 @@ void list_matches(tmenu *tm) {
   off = getEscCode(tm->op.nf, FOREGROUND_MODE, nrm_esc);
   getEscCode(tm->op.nb, BACKGROUND_MODE, nrm_esc+off);
 
-  char key[128], tmp[128];
+  char key[MAX_KEY_LEN], tmp[MAC_LINE_LENGTH];
 
   strcpy(key, tm->key);
   if (tm->op.ignore_case) strlwr(key);
