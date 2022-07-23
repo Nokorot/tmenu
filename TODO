@@ -18,8 +18,6 @@ checked each time a character is entered.
 
 # Needs to be done and Ideas
 
-- Scroll
-
 - Free writing result.
 - Following multi select
         That is, the lines are push when selected and removed from the list.
@@ -32,11 +30,9 @@ checked each time a character is entered.
 - Redraw only what is nessesary
 - Handle changing terminal size
 - Capture Ctrl-C and Ctrl-Z
-- Page up / Page Down, End / Home
 - Vim keys (when holding alt) / Emacs key
 - Configuration file
 - Capture Unicode chars
-
 
 
 # Partaly done
@@ -44,6 +40,8 @@ checked each time a character is entered.
 - Color flag: Needs some clean up
 
 # Done:
+- Scroll
+- Page up / Page Down, End / Home
 - Prompt
 - Multi select
 - Flags,  ignore case
