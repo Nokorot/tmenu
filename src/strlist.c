@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <string.h>
 
 // TODO: Make a BiTree index, in order to ensure uniqeness.
 // TODO: Maybe. Index with linked list to keep track of the order.
@@ -25,14 +26,15 @@ StrList strlist_new(size_t cap) {
 }
 
 // The index of the strings matching the 'pattern is stored in 'matches
-//
-// TODO: flags: ignore case
-int strlist_match(const StrList *slist, const char *pattern, int *matches) {
+int strlist_match(const StrList *slist, const char *pattern, int *matches, int flags) {
     int j=0, i=0;
     char **str = slist->index;
+    char *(*_strcmp)(const char *, const char *);
+    _strcmp = (flags & STRLIST_IGNORE_CASE) ? &strcasestr : strstr;
+
     for (; i<slist->size; ++i, ++str) {
         // Checking if str is null. Thus allowing for empty entries
-        if (str && strstr(*str, pattern))
+        if (str && _strcmp(*str, pattern))
             matches[j++] = i;
     }
     matches[j] = -1;
