@@ -20,6 +20,10 @@ typedef struct tmenu_data {
   int out_rows, out_cols;
   int sel, cur;
 
+  // TODO: Only redraw what needs to be redrawn.
+  //      Could have a grid or line of these, maybe.
+  bool dirty;
+
   int *matches;
   int matches_count;
   int matches_cap;
