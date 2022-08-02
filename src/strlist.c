@@ -20,10 +20,24 @@ int wrap_strcmp(char **a, char **b) {
     return strcmp(*a, *b);
 }
 
+// typedef struct StrEntry {
+//     char *data;
+//     int len;
+//
+//     BiNode nd;
+// } StrEntry;
+//
+// int strentry_cmp(StrEntry *a, StrEntry *b) {
+//     if (b->len < a->len)
+//         return strncmp(a->data, b->data, a->len);
+//     return strncmp(a->data, b->data, b->len);
+// }
+
+
 StrList strlist_new(size_t cap) {
     StrList sl;
-    sl.index = (char **) malloc(sizeof(char *)*cap);
-    sl.bt_index = bitree_new((bitree_cmp_func) wrap_strcmp);
+    sl.index = (char **) malloc(cap*sizeof(char *));
+    sl.bt_index = bitree_new((bitree_cmp_func) wrap_strcmp, cap);
     sl.size = 0;
     sl.flags = STRLIST_UNIQUE;
     sl.count = 0;

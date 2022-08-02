@@ -3,7 +3,7 @@
 /// // TODO: Batched llist
 /// struct BLList {
 ///     LLNode *first, *last;
-/// 
+///
 ///     int bachsize;
 ///     LList *batches;
 /// };
@@ -24,7 +24,7 @@ struct LLNode {
 
 struct LList {
     LLNode *first, *last;
-    int size;
+    size_t size;
 };
 
 
@@ -41,12 +41,19 @@ typedef int (*bitree_cmp_func)(void *, void *);
 typedef struct BiTree BiTree;
 typedef struct BiNode BiNode;
 
+typedef size_t bitmap_packet;
+
 struct BiTree {
     BiNode *root;
-    int size;
+    size_t size;
+    BiNode *nodes;
+    size_t capacity;
+
+    // BitMap
+    size_t next;
+    bitmap_packet *mask;
+
     bitree_cmp_func compare;
-    
-    int capacity;
 };
 
 struct BiNode {
@@ -55,10 +62,7 @@ struct BiNode {
 };
 
 // Create a new empty BiTeee, with compare function set to 'compare.
-BiTree *bitree_new(bitree_cmp_func compare);
-
-// Create a new empty BiNode with data 'data.
-BiNode *binode_new(void *data);
+BiTree *bitree_new(bitree_cmp_func compare, size_t capacity);
 
 // Adds 'data to the BiTree 'bt.
 //   Returns true, if a new node was created and false if
@@ -67,12 +71,10 @@ BiNode *binode_new(void *data);
 //   In either case 'new_nd is set to point at the corresonding node.
 bool bitree_add(BiTree *bt, void *data, BiNode **new_nd);
 
-// 
-bool bitree_find(BiTree *bt, void *data, BiNode **new_nd);
-
 
 bool bitree_rm(BiTree *bt, void *data);
 
+bool bitree_find(BiTree *bt, void *data, BiNode **new_nd);
 
 void itter(BiNode *nd, bool (*func)(void *data));
 
