@@ -53,7 +53,8 @@ void list_matches(tmenu *tm) {
 
     // Note: in stead of a list of strings, we should have a list of structs,
     // with a flag, indicating wheter it is selected
-    if (strlist_find(&tm->results, tm->lines.index[*idx])) {
+    char **res = strlist_find(&tm->results, tm->lines.index[*idx]);
+    if (res) {
       fprintf(stdout, " * %.*s\n", tm->out_cols, tm->lines.index[*idx]);
     } else {
       fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[*idx]);
@@ -122,7 +123,8 @@ void del_ch(tmenu *tm, int index) {
 void push_result(tmenu *tm) {
   char *sel = cur_sel(tm);
 
-  if (!strlist_rm(&tm->results, sel)) {
+  // Delete if exitsts.
+  if (!strlist_rm(&tm->results, sel)) { 
     strlist_add(&tm->results, sel, 2);
     // TODO: This does not make sense when you can deselet.
     //          There shuld be a flag, for doing this. And then the line sould disapere

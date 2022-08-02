@@ -1,4 +1,8 @@
 /root/Notes/AlgebraicGeometryNotes.pdf
+/root/Notes/AlgebraicGeometryNotes.pdf
+/root/Notes/AlgebraicGeometryNotes.pdf
+/root/Notes/AlgebraicGeometryNotes.pdf
+/root/Notes/AlgebraicGeometryNotes.pdf
 /root/Notes/Chern-Weil_Theory/Nicolaescu L. - Lectures on the geometry of manifolds (2007).pdf.pdf
 /root/Notes/J.E. Humphreys - Introduction to Lie algebras and representation theory.pdf
 /root/Notes/KK-theory/2021_WS_KK-theory.pdf

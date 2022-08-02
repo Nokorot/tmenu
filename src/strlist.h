@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "data.h"
 
 // #define STRLIST_UNIQUE 0
 #define STRLIST_UNIQUE 1
@@ -11,13 +12,16 @@
 
 #define STRLIST_IGNORE_CASE   4
 
-typedef struct {
-    // int flags; // Uniqe entries?
-
+typedef struct StrLit {
     char **index;
     size_t size; // Includes empty entries
     size_t count; // Does not includes empty entries
+
     size_t capacity;
+
+    // int flags; // Uniqe entries?
+    BiTree *bt_index;
+    int flags;
 } StrList;
 
 // Creates a new empty StrList

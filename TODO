@@ -4,6 +4,8 @@
 
 - !!! Realy need to use a beter data structure for StrList
 
+- LOG to a sepperate file in DEBUG mode
+
 Note:
 If tmenu outputs the current content of the entry at each key press,
 the list could be adjuted acording to what is written. This could be
