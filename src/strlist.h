@@ -10,6 +10,8 @@
 #define STRLIST_UNIQUE 1
 #define STRLIST_COPY   2
 
+#define STRLIST_IGNORE_CASE   4
+
 typedef struct {
     // int flags; // Uniqe entries?
 
@@ -30,7 +32,7 @@ void strlist_add(StrList *slst, char *str, int flags);
 
 // Searches the list for entries matching the 'pattern
 // The index of the strings matching the 'pattern is stored in 'matches
-int strlist_match(const StrList *slist, const char *pattern, int *matches);
+int strlist_match(const StrList *slist, const char *pattern, int *matches, int flags);
 
 // TODO: -1 means at the end
 // void strlist_insert(StrList *slst, const char *str, int index, int flags);

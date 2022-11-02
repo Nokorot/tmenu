@@ -96,7 +96,10 @@ void draw_screen(tmenu *tm) {
 }
 
 void update_matches(tmenu *tm) {
-  tm->matches_count = strlist_match(&tm->lines, tm->key, tm->matches);
+  int flags = 0;
+  if (tm->op.ignore_case)
+      flags |= STRLIST_IGNORE_CASE;
+  tm->matches_count = strlist_match(&tm->lines, tm->key, tm->matches, flags);
 }
 
 

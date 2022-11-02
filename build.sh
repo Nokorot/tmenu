@@ -11,14 +11,14 @@ EXE="$PRGNAME"
 CC="gcc"
 
 ### Compile definions
-# DEFS="-D_WIN32_WINNT=0x0602"
+DEFS="-D_GNU_SOURCE"
 
 ### Compililation flags
-# STD="-std=c99"
+STD="" # "-std=c99"
 # LIBS="-ldwmapi -luxtheme"
 
-DFLAGS="$STD -Wall -pedantic -ggdb"
-RFLAGS="$STD -O3"  
+DFLAGS="$STD $DEFS -Wall -pedantic -ggdb"
+RFLAGS="$STD $DEFS -O3"
 
 ### Instalation destination
 DST="/usr"
