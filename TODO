@@ -16,6 +16,10 @@ In this case a clear signal might be usefull and/or a (-r) remove pipe/file.
 
 This would also requite, the input file to be read, on a different thread or
 checked each time a character is entered.
+# Alternativly:
+    Generate, generate these inside tmenu.
+    Some regex expresion. ".*%{date, time, ...}"
+    Would go well with json
 
 
 # Needs to be done and Ideas

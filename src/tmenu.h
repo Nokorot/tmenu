@@ -4,32 +4,57 @@
 #include <stdio.h>
 
 #include "main.h"
-#include "strlist.h"
+#include <jansson.h>
 
 // TODO: Trim line to this length ?
-#define MAC_LINE_LENGTH 1024
-#define MAX_KEY_LEN 1024
+#define MAX_LINE_LENGTH 1024
+#define MAX_KEY_LEN BUFSIZ
 #define INPUT_CAP 1024*1024
 
-// TODO: Bette data structure
+typedef struct item {
+    char *key;
+    bool selected;
+    json_t *json;
+
+    // struct item *next_match;
+    // // This will make it posible to preserve the order of adding
+    // struct item *next_selected;
+} item;
+
 typedef struct tmenu_data {
-  options op;
+    options op;
+    FILE *out;
+    // TODO: Resize
+    int out_rows, out_cols;
 
-  FILE *out;
+    item *items;
+    size_t items_sz;
+    size_t items_ln;
 
-  int out_rows, out_cols;
-  int sel, cur;
+    // cursor
+    int cur;
+    size_t sel;
+    // item *sel;
 
-  int *matches;
-  int matches_count;
-  int matches_cap;
+    int *matches;
+    int matches_count;
+    int matches_cap;
+    // item *matches, matches_end;
 
-  StrList lines; // TODO: Store mathces
-  StrList results;
+    json_t *json;
+    int jsondepth;
 
-  char *key;
-  int key_len;
+
+    char *key;
+    int key_len;
 } tmenu;
+
+
+item *itemnew(tmenu *tm);
+void read_input(tmenu *tm, char *inpt);
+
+void listjson(tmenu *tm, json_t *obj);
+
 
 void draw_screen(tmenu *tm);
 
@@ -37,12 +62,11 @@ void list_matches(tmenu *tm);
 void add_ch(tmenu *tm, char ch);
 void del_ch(tmenu *tm, int index);
 
+void set_sel(tmenu *tm, int index);
+
 int main_loop();
 
-StrList read_input(char *inpt);
+// StrList read_input(char *inpt);
 void push_result(tmenu *tm);
 
-// String utils
-_Bool str_contains(char *str, char c);
-void str_rtrim(char *str);
 #endif

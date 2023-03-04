@@ -8,8 +8,6 @@
 #include "minimal.h"
 #include "tmenu.h"
 
-#include "strlist.h"
-
 #include "color.h"
 
 #define FLAG_IMPLEMENTATION
@@ -49,7 +47,8 @@ int main(int argc, char **argv) {
 
   bool *help      = flag_bool("help", false, "Print this help to stdout and exit with 0");
   bool *ign_case  = flag_bool("i", false, "Ignore case");
-  char **prompt   = flag_str("p", NULL, "Prompt to be displayed");
+  bool *json      = flag_bool("j", false, "Read input file as a jsonfile");
+  char **prompt   = flag_str("p",  NULL, "Prompt to be displayed");
   char **pv       = flag_str("pv", NULL, "Preview, output current selection");
 
   bool *ms  = flag_bool("ms", false, "Multi-select, outputs selected item without exiting, when <Return> is pressed.");
@@ -85,15 +84,32 @@ int main(int argc, char **argv) {
   char key[MAX_KEY_LEN]; *key = 0;
   tm.key = key;
   tm.key_len = 0;
-  tm.lines = read_input(*(argv++));
-  tm.matches = (int*) malloc(sizeof(int)*tm.lines.size);
-  tm.matches_cap = tm.lines.size;
+
+  tm.items_sz = 0;
+  tm.items_ln = 0;
+  tm.items = NULL;
+
+  if (*json) {
+    read_json(&tm, *(argv++));
+  } else
+    read_input(&tm, *(argv++));
+  // tm.lines = read_input(*(argv++));
+
+  tm.matches = (int*) malloc(sizeof(int)*tm.items_ln);
+  // tm.matches = (int*) malloc(sizeof(int)*tm.lines.size);
+
+  tm.matches_cap = tm.items_ln;
+  // tm.matches_cap = tm.lines.size;
   tm.sel = 0;
   tm.cur = 1;
 
-  tm.results = strlist_new(tm.op.ms ? 1024 : 1);
 
-  tm.out = 0;
+  tm.json = NULL;
+  tm.jsondepth = -1;
+
+  // tm.results = strlist_new(tm.op.ms ? 1024 : 1);
+
+  tm.out = stdout;
   if (*argv) {
     char *out_fn = *(argv++);
     tm.out = fopen(out_fn, "w");
@@ -128,6 +144,8 @@ int main(int argc, char **argv) {
 
 
   int ret_val = main_loop(&tm);
+  fclose(tm.out);
+
   return ret_val;
 }
 

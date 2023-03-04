@@ -2,39 +2,76 @@
 
 #include "minimal.h"
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 
-StrList read_input(char *inpt) {
-  StrList lines = strlist_new(INPUT_CAP);
+#include "util.h"
+#include "strutil.h"
 
+#include <jansson.h>
+
+item *itemnew(tmenu *tm) {
+	if (tm->items_ln + 1 >= (tm->items_sz / sizeof(item)))
+		if (!(tm->items = realloc(tm->items, (tm->items_sz += BUFSIZ))))
+			die("cannot realloc %u bytes:", tm->items_sz);
+
+  memset(&tm->items[tm->items_ln], 0, sizeof(item));
+	return &tm->items[tm->items_ln++];
+}
+
+void read_input(tmenu *tm, char *inpt) {
   FILE *fin;
   fin = fopen(inpt, "r");
   if (fin == NULL)
     exit(EXIT_FAILURE);
 
-  // TODO: trim endline char
+  item *item;
   char * line = NULL; size_t len = 0;
   while (getline(&line, &len, fin) != -1) {
+    item = itemnew(tm);
     str_rtrim(line);
-    strlist_add(&lines, line, 2);
+		if (!(item->key = strdup(line)))
+			die("cannot strdup %u bytes:", strlen(line) + 1);
   }
-
-  return lines;
 }
+
+void read_json(tmenu *tm, const char *path)
+{
+	json_error_t jerr;
+
+	if (!(tm->json = json_load_file(path, 0, &jerr)))
+		die("%s @ line: %i - %s", jerr.text, jerr.line, path);
+
+  listjson(tm, tm->json);
+}
+
+void listjson(tmenu *tm, json_t *obj)
+{
+	void *iter;
+	struct item *item;
+
+	// tm->items_ln = 0;
+	iter = json_object_iter(obj);
+	while (iter) {
+		item = itemnew(tm);
+		item->key = (char*) json_object_iter_key(iter);
+		item->json = json_object_iter_value(iter);
+		iter = json_object_iter_next(obj, iter);
+	}
+}
+
+
 
 void strlwr(char *str) {
   for(; *str; ++str)
     *str = tolower(*str);
 }
 
-char *cur_sel(tmenu *tm) {
-  int idx = tm->matches[tm->sel];
-  return tm->lines.index[idx];
+item *cur_sel(tmenu *tm) {
+  return tm->items + tm->matches[tm->sel];
 }
 
 void list_matches(tmenu *tm) {
-  char *last;
-
   // TODO: This shuld be done somewhere else.
   int off;
   char sel_esc[40], nrm_esc[40];
@@ -49,36 +86,33 @@ void list_matches(tmenu *tm) {
 
   int i=page*rows , *idx = tm->matches+i;
 
+  item *item, *last;
+
   for (; i < tm->matches_count && i < (page+1)*rows; ++i, ++idx) {
+    item = tm->items + *idx;
+
     fprintf(stdout, "%s", (i == tm->sel) ? sel_esc : nrm_esc);
+    // fprintf(stdout, "%s", (item == tm->sel) ? sel_esc : nrm_esc);
 
     // Note: in stead of a list of strings, we should have a list of structs,
     // with a flag, indicating wheter it is selected
-    if (strlist_find(&tm->results, tm->lines.index[*idx])) {
-      fprintf(stdout, " * %.*s\n", tm->out_cols, tm->lines.index[*idx]);
+    // if (strlist_find(&tm->results, tm->lines.index[*idx])) {
+    if (item->selected) {
+      fprintf(stdout, " * %.*s\n", tm->out_cols, item->key);
     } else {
-      fprintf(stdout, "%.*s\n", tm->out_cols, tm->lines.index[*idx]);
+      fprintf(stdout, "%.*s\n", tm->out_cols, item->key);
     }
-    last = tm->lines.index[i];
+    last = item;
   }
-
-  // TODO: FIX: This is a hack
-  // if (i <= tm->sel && i > 0) {
-  //   tm->sel = i-1;
-
-  //   fprintf(stdout, "\x1b[A");
-  //   fprintf(stdout, "%s%.*s", sel_esc, tm->out_cols, last);
-  // }
 
   // Reset at the end
   fprintf(stdout, "\x1b[0m");
 }
 
 // TODO: dirty paramenter
-
 void draw_screen(tmenu *tm) {
   if (tm->op.pv) {
-    fprintf(tm->op.pv, "%s\n", cur_sel(tm));
+    fprintf(tm->op.pv, "%s\n", cur_sel(tm)->key);
     fflush(tm->op.pv);
   }
 
@@ -96,12 +130,17 @@ void draw_screen(tmenu *tm) {
 }
 
 void update_matches(tmenu *tm) {
-  int flags = 0;
-  if (tm->op.ignore_case)
-      flags |= STRLIST_IGNORE_CASE;
-  tm->matches_count = strlist_match(&tm->lines, tm->key, tm->matches, flags);
-}
+  int j=0, i=0;
+  item *item = tm->items;
+  char *(*_strcmp)(const char *, const char *);
+  _strcmp = tm->op.ignore_case ? &strcasestr : strstr;
 
+  for (; i < tm->items_ln; ++i, ++item) {
+    if (item->key && _strcmp(item->key, tm->key))
+      tm->matches[j++] = i;
+  }
+  tm->matches_count = j;
+}
 
 void add_ch(tmenu *tm, char ch) {
   tm->key[tm->key_len++] = ch;
@@ -109,41 +148,84 @@ void add_ch(tmenu *tm, char ch) {
 
   tm->cur++;
   update_matches(tm);
+  set_sel(tm, 0);
   draw_screen(tm);
 }
 
 void del_ch(tmenu *tm, int index) {
-  if (index < 0)
-      index = tm->cur;
+    if (index < 0)
+        index = tm->cur;
 
-  // The first case sould imply the second, if not someting is wrong
-  if (index > 0 && index < tm->key_len+2 && tm->key_len > 0) {
-    for (int i=index; ++i < tm->key_len;)
-        tm->key[i-1] = tm->key[i];
-    tm->key[--tm->key_len] = 0;
+    // The first case sould imply the second, if not someting is wrong
+    if (index > 0 && index < tm->key_len+2 && tm->key_len > 0) {
+        for (int i=index; ++i < tm->key_len;)
+            tm->key[i-1] = tm->key[i];
+        tm->key[--tm->key_len] = 0;
 
-    update_matches(tm);
-    draw_screen(tm);
-  }
+        update_matches(tm);
+        set_sel(tm, 0);
+        draw_screen(tm);
+    }
 }
 
-void push_result(tmenu *tm) {
-  char *sel = cur_sel(tm);
+void toggle_select(tmenu *tm) {
+    item *item = tm->items + tm->matches[tm->sel];
+    item->selected = !item->selected;
+}
 
-  if (!strlist_rm(&tm->results, sel)) {
-    strlist_add(&tm->results, sel, 2);
-    // TODO: This does not make sense when you can deselet.
-    //          There shuld be a flag, for doing this. And then the line sould disapere
-    // if (tm->out)
-    //   fprintf(tm->out, "%s\n", sel);
-  }
+bool dump_json_value(FILE *sink, json_t *json) {
+    switch json_typeof(json){
+      case JSON_OBJECT:
+      case JSON_ARRAY:
+          fprintf(sink, "%s\n", json_dumps(json, 0)); return true;
+      case JSON_STRING:
+          char *str = json_string_value(json);
+          // char *pch = strstr(str, "%key");
+          // while (*pch = strstr(str, "%key")) {
+          //   fprintf(sink, "%.*s", pch - str, str);
+          //   fprintf(sink, "%s", tm->key); // This is pretty bad
+          //   str = pch + 4;
+          // }
+          fprintf(sink, "%s\n", json_string_value(json)); return true;
+      case JSON_INTEGER:
+          fprintf(sink, "%d\n", json_integer_value(json)); return true;
+      case JSON_REAL:
+          fprintf(sink, "%f\n", json_real_value(json)); return true;
+      case JSON_TRUE:
+          fprintf(sink, "true\n"); return true;
+      case JSON_FALSE:
+          fprintf(sink, "false\n"); return true;
+      default:
+          return NULL;
+    }
+}
+
+void write_results(tmenu *tm) {
+    item *item = tm->items;
+    for (int idx = 0; idx < tm->items_ln; ++idx, ++item) {
+        if (item->key && item->selected) {
+            if (!item->json || !dump_json_value(tm->out, item->json))
+                fprintf(tm->out, "%s\n", item->key);
+        }
+    }
+    fflush(tm->out);
+}
+
+void tmenu_close(tmenu *tm) {
+    printf("%s", "\x1B[\?1049l");
 }
 
 void set_sel(tmenu *tm, int index) {
-    if (index < 0 || index > tm->matches_count-1)
+    if (index == 0)
+        tm->sel = index;
+    else if (index < 0 || index > tm->matches_count-1)
         tm->sel = tm->matches_count-1;
     else
         tm->sel = index;
+    // if (index < 0 || index > tm->matches_count-1)
+    //     tm->sel = tm->matches[tm->matches_count-1];
+    // else
+    //     tm->sel = tm->matches[index];
 
     draw_screen(tm);
 }
@@ -170,12 +252,14 @@ void move_cur(tmenu *tm, int amount) {
     draw_screen(tm);
 }
 
+
 int main_loop(tmenu *tm) {
   update_matches(tm);
   draw_screen(tm);
 
   _Bool quit = 0;
   for (int c; !quit && (c = getc(stdin)) != EOF;) {
+
     switch (c) {
       case '\x1b': // Escape
         c = getc(stdin);
@@ -200,7 +284,7 @@ int main_loop(tmenu *tm) {
                 modifyer = modifyer*10 + c-'0';
               }
           }
-          // printf("%d", modifyer);
+          // fprintf(tm->out, "%d", modifyer);
 
           switch(c) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
@@ -216,14 +300,10 @@ int main_loop(tmenu *tm) {
             case 'H': // Home
                 set_sel(tm, 0); continue;
             case 10: // Alt + Retrun
-                // Might want to use this for someting else.
-                if (tm->op.ms) {
-                  push_result(tm);
-                  move_sel(tm, +1);
-                  // NOTE: Not needed, since it is done by move_sel
-                  // draw_screen(tm);
-                }
-                continue;
+                // toggle_select(tm);
+                tmenu_close(tm);
+                write_results(tm);
+                return 0;
             case '~':
                 int rows = tm->out_rows - 2;
                 // TODO: page function;
@@ -246,41 +326,32 @@ int main_loop(tmenu *tm) {
             default:
                 continue;
           }
-        } else if (isalpha(c) || isdigit(c)) {
+        } else if (c == 13) { // Alt+Return
+          // toggle_select(tm);
+          write_results(tm);
+          return 0;
+        }
+        else if (isalpha(c) || isdigit(c)) {
            // NOTE: This is alt+<key>
            //  Would be nice to use for custum keybindings
-
           add_ch(tm, c);
         }
-      case ' ': // Space
-        // Shift space to write space
-        if (tm->op.ms) {
-          push_result(tm);
-          move_sel(tm, +1);
-          // NOTE: Not needed, since it is done by move_sel
-          // draw_screen(tm);
-        } else {
-            add_ch(tm, ' ');
-        }
         continue;
+      case ' ': // Space
+        add_ch(tm, ' ');
+        continue;
+      case 'J': // Shift+j
       case 'j' & 037: // Ctrl+j
         move_sel(tm, +1); continue;
       case 'k' & 037: // Ctrl+k
         move_sel(tm, -1); continue;
       case '\x0d': // Return
-        if (!tm->op.ms)
-          push_result(tm);
-
-        printf("%s", "\x1B[\?1049l");
-        char **str = tm->results.index, **end = str + tm->results.size;
-        if (tm->out) {
-          for (; str < end; ++str)
-            fprintf(tm->out, "%s\n", *str);
-          fclose(tm->out);
-        } else {
-          for (; str < end; ++str)
-            printf("%s\n", *str);
-        }
+        toggle_select(tm);
+        move_sel(tm, +1);
+        if (tm->op.ms)
+            continue;
+        tmenu_close(tm);
+        write_results(tm);
         return 0;
       case '\x7f': // backspace
         del_ch(tm, tm->cur);
@@ -292,23 +363,7 @@ int main_loop(tmenu *tm) {
         add_ch(tm, c);
         continue;
     }
-
   }
   return 0;
 }
 
-
-
-_Bool str_contains(char *str, char c) {
-  for (int ch = *str; (ch = *(str++));)
-    if (ch == c) return 1;
-  return 0;
-}
-
-void str_rtrim(char *str) {
-  char *mx = str;
-  for (int ch = *str; (ch = *(str++));)
-    if (!str_contains(" \n\r\t", ch))
-        mx = str;
-  *mx = '\0';
-}

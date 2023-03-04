@@ -11,7 +11,7 @@ EXE="$PRGNAME"
 CC="gcc"
 
 ### Compile definions
-DEFS="-D_GNU_SOURCE"
+DEFS="-ljansson -D_GNU_SOURCE"
 
 ### Compililation flags
 STD="" # "-std=c99"

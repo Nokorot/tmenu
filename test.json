@@ -1,0 +1,13 @@
+{
+    "Array": [1,2,3,{
+        "A": 4
+    }],
+    "First": { "A": "This is the first entry" },
+    "Second": "This is the second entry",
+    "Third": 3,
+    "Fourth": 4.4,
+    "True": true,
+    "False": false,
+
+    ".*.pdf" : "%key"
+}
