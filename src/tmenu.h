@@ -46,7 +46,7 @@ typedef struct tmenu_data {
 
 #ifdef DEBUG_LOG
     FILE *debug_log;
-    
+
 #endif
 
     char *key;

@@ -151,7 +151,7 @@ void update_matches(tmenu *tm) {
   for (; i < tm->items_ln; ++i, ++item) {
     int k = 0;
 		for (; k < tokc; k++) {
-			if (!_strstr(item->key, tokv[k])) 
+			if (!_strstr(item->key, tokv[k]))
 				break;
     }
     if (k != tokc) /* not all tokens match */
@@ -276,7 +276,7 @@ int main_loop(tmenu *tm) {
         c = getc(stdin);
         if (c == '\x1b') { // Quit on double escape
             tmenu_close(tm);
-            return 0; 
+            return 0;
         }
         else if(c == '[') { // Escape sequence
           c = getc(stdin);
@@ -299,7 +299,7 @@ int main_loop(tmenu *tm) {
               }
           }
           // fprintf(tm->out, "%d", modifyer);
-        
+
           int rows;
           switch(c) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
