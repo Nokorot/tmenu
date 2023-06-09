@@ -167,8 +167,10 @@ Flag *flag_find_by_name(const char *name)
     Flag_Context *c = &flag_global_context;
 
     for (size_t i = 0; i < c->flags_count; ++i) {
-        if (strcmp(c->flags[i].name, name) == 0)
+        if ((strcmp(c->flags[i].name, name) == 0) ||
+            (c->flags[i].variant && strcmp(c->flags[i].variant, name) == 0))
           return &c->flags[i];
+
     }
 
     return NULL;
