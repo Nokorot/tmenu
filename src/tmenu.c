@@ -178,7 +178,7 @@ void del_ch(tmenu *tm, int index) {
     if (index < 0)
         index = tm->cur;
 
-    // The first case sould imply the second, if not someting is wrong
+    // The first case should imply the second, if not something is wrong
     if (index > 0 && index < tm->key_len+2 && tm->key_len > 0) {
         for (int i=index; ++i < tm->key_len;)
             tm->key[i-1] = tm->key[i];

@@ -16,6 +16,8 @@ typedef struct options {
 
   FILE *pv;
 
+  char key_separate;
+
   Color nb, nf, sb, sf;
 } options;
 
