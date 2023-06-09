@@ -57,6 +57,9 @@ int main(int argc, char **argv) {
   char **preview       = flag_str("preview", NULL, "Preview, output current selection");
   flag_set_variant((void *) preview, "pv");
 
+  char *key_separator = flag_char("key-separator", ' ', "Set the character that separates the different parts of the search key");
+  flag_set_variant(key_separator, "sep");
+
   char **nb_color = flag_str("nb", NULL, "defines the normal background color.");
   char **nf_color = flag_str("nf", NULL, "defines the normal foreground color.");
   char **sb_color = flag_str("sb", NULL, "defines the selected background color.");
@@ -74,6 +77,7 @@ int main(int argc, char **argv) {
 
   tm.op.ignore_case = *ign_case;
   tm.op.prompt = *prompt;
+  tm.op.key_separator[0] = *key_separator;
 
   tm.op.ms = *ms;
 

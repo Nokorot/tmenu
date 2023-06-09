@@ -1,12 +1,28 @@
 
-- the token separator ' ', should be possible to change with a flag
-
--  Allow for free writing
+-  Allow for free writing, depending on a flag
 
 - Json Config file
 - Json Source file
 
-- !!! Really need to use a better data structure for StrList
+- Better data structure for StrList, orderd_list, see red_black_tree dml
+
+- Capture Ctrl-C and Ctrl-Z
+
+- Free writing result.
+- Realtime multi select
+        That is, the lines are push when selected and removed from the list.
+        (Removing could also be an option, but then there most be some visual indication of what has been pushed).
+        This allows the receiving program to act on the selected line in parallel.
+        But deselecting lines makes no sense any more.
+
+
+- Flag for commit/quit conformation
+        convenient in the case of multi-select
+- Redraw only what is necessary
+- Handle changing terminal size
+- Configuration file
+- Capture Unicode chars
+
 
 Note:
 If tmenu outputs the current content of the entry at each key press,
@@ -25,35 +41,22 @@ checked each time a character is entered.
 
 # Needs to be done and Ideas
 
-- Scroll
 
-- Free writing result.
-- Following multi select
-        That is, the lines are push when selected and removed from the list.
-        (Removing could also be an option, but then there most be some visual indication of what has been pushed).
-        This allows the receiving program to act on the selected line in parallel.
-        But deselecting lines makes no sense any more.
-
-- Flag for commit/quit conformation
-        convenient in the case of multi-select
-- Redraw only what is necessary
-- Handle changing terminal size
-- Capture Ctrl-C and Ctrl-Z
-- Page up / Page Down, End / Home
-- Vim keys (when holding Alt) / Emacs key
-- Configuration file
-- Capture Unicode chars
 
 
 
 # Partly done
 - Don't overflow the selection, i.e. move the selection when sel > #lines
 - Colour flag: Needs some clean up
+- Vim keys (when holding Alt) / Emacs key
+    - Ctrl-d, Ctrl-u
 
 # Done:
 - Prompt
+- Scroll
 - Multi select
 - Flags,  ignore case
+- Page up / Page Down, End / Home
 - Cursor selection. Up Down
 - Cursor selection: Left right
-
+- the token separator ' ', should be possible to change with a flag

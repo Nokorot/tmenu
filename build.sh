@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DEBUG_LOG="./debug_log"
+
 ### Program name
 PRGNAME="tmenu"
 

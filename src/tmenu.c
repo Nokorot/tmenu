@@ -1,6 +1,7 @@
 #include "tmenu.h"
 
 #include "minimal.h"
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -143,7 +144,7 @@ void update_matches(tmenu *tm) {
 	strcpy(buf, tm->key);
 
 	/* separate input text into tokens to be matched individually */
-	for (s = strtok(buf, " "); s; tokv[tokc - 1] = s, s = strtok(NULL, " ")) {
+	for (s = strtok(buf, tm->op.key_separator); s; tokv[tokc - 1] = s, s = strtok(NULL, " ")) {
 		if (++tokc > tokn && !(tokv = realloc(tokv, ++tokn * sizeof *tokv)))
 			die("cannot realloc %u bytes:", tokn * sizeof *tokv);
   }
@@ -164,33 +165,35 @@ void update_matches(tmenu *tm) {
   tm->matches_count = j;
 }
 
+// Insert really
 void add_ch(tmenu *tm, char ch) {
-  tm->key[tm->key_len++] = ch;
-  tm->key[tm->key_len] = 0;
+  for (int i = ++tm->key_len; i >= tm->cur; --i)
+    tm->key[i] = tm->key[i-1];
+  tm->key[tm->cur++ -1] = ch;
 
-  tm->cur++;
   update_matches(tm);
   set_sel(tm, 0);
   draw_screen(tm);
 }
 
 void del_ch(tmenu *tm, int index) {
-    if (index < 0)
-        index = tm->cur;
+    if (!index || index > tm->key_len)
+        return;
 
-    // The first case should imply the second, if not something is wrong
-    if (index > 0 && index < tm->key_len+2 && tm->key_len > 0) {
-        for (int i=index; ++i < tm->key_len;)
-            tm->key[i-1] = tm->key[i];
-        tm->key[--tm->key_len] = 0;
+    for (int i=index-1; ++i < tm->key_len;)
+        tm->key[i-1] = tm->key[i];
+    tm->key[--tm->key_len] = 0;
 
-        update_matches(tm);
-        set_sel(tm, 0);
-        draw_screen(tm);
-    }
+    update_matches(tm);
+    set_sel(tm, 0);
+    draw_screen(tm);
+
 }
 
 void toggle_select(tmenu *tm) {
+    if (!tm->matches_count)
+        return;
+
     item *item = tm->items + tm->matches[tm->sel];
     item->selected = !item->selected;
 }
@@ -369,7 +372,7 @@ int main_loop(tmenu *tm) {
         write_results(tm);
         return 0;
       case '\x7f': // backspace
-        del_ch(tm, tm->cur);
+        del_ch(tm, tm->cur-1);
         move_cur(tm, -1);
         continue;
     }
