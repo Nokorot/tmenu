@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
   color_arg("sb", *sb_color, &tm.op.sb, color4(false, 3)); // Yellow
   color_arg("sf", *sf_color, &tm.op.sf, color4(false, 0)); // Black
 
-
   // Initialize tmenu_data
   char key[MAX_KEY_LEN]; *key = 0;
   tm.key = key;
@@ -110,11 +109,8 @@ int main(int argc, char **argv) {
   tm.sel = 0;
   tm.cur = 1;
 
-
   tm.json = NULL;
   tm.jsondepth = -1;
-
-  // tm.results = strlist_new(tm.op.ms ? 1024 : 1);
 
   tm.out = stdout;
   if (*argv) {
@@ -166,4 +162,3 @@ int main(int argc, char **argv) {
 
   return ret_val;
 }
-

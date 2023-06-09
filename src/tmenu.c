@@ -74,7 +74,7 @@ item *cur_sel(tmenu *tm) {
 }
 
 void list_matches(tmenu *tm) {
-  // TODO: This shuld be done somewhere else.
+  // TODO: This should be done somewhere else.
   int off;
   char sel_esc[40], nrm_esc[40];
   off = getEscCode(tm->op.sf, FOREGROUND_MODE, sel_esc);
@@ -97,7 +97,7 @@ void list_matches(tmenu *tm) {
     // fprintf(stdout, "%s", (item == tm->sel) ? sel_esc : nrm_esc);
 
     // Note: in stead of a list of strings, we should have a list of structs,
-    // with a flag, indicating wheter it is selected
+    // with a flag, indicating whether it is selected
     // if (strlist_find(&tm->results, tm->lines.index[*idx])) {
     if (item->selected) {
       fprintf(stdout, " * %.*s\n", tm->out_cols, item->key);
@@ -187,7 +187,6 @@ void del_ch(tmenu *tm, int index) {
     update_matches(tm);
     set_sel(tm, 0);
     draw_screen(tm);
-
 }
 
 void toggle_select(tmenu *tm) {
@@ -338,7 +337,7 @@ int main_loop(tmenu *tm) {
                         move_sel(tm, rows); continue;
                     default:
                         printf("%d", keycode);
-                        // Not suported
+                        // Not supported
                         continue;
                 }
             default:
@@ -351,7 +350,7 @@ int main_loop(tmenu *tm) {
         }
         else if (isalpha(c) || isdigit(c)) {
            // NOTE: This is alt+<key>
-           //  Would be nice to use for custum keybindings
+           //  Would be nice to use for custom keybindings
           add_ch(tm, c);
         }
         continue;
@@ -384,4 +383,3 @@ int main_loop(tmenu *tm) {
   }
   return 0;
 }
-
