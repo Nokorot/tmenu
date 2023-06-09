@@ -119,6 +119,14 @@ int main(int argc, char **argv) {
     }
   }
 
+#ifdef DEBUG_LOG
+  tm.debug_log = fopen(DEBUG_LOG, "w");
+  if (tm.debug_log == NULL) {
+    fprintf(stderr, "Could not debug_log file '%s'\n", DEBUG_LOG);
+    exit(EXIT_FAILURE);
+  }
+#endif
+
   tm.op.pv = 0;
   if (*pv) {
     tm.op.pv = fopen(*pv, "w");
@@ -142,9 +150,12 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-
   int ret_val = main_loop(&tm);
   fclose(tm.out);
+
+#ifdef DEBUG_LOG
+  fclose(tm.debug_log);
+#endif
 
   return ret_val;
 }

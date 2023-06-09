@@ -11,9 +11,10 @@
 #include <jansson.h>
 
 item *itemnew(tmenu *tm) {
-	if (tm->items_ln + 1 >= (tm->items_sz / sizeof(item)))
+	if (tm->items_ln + 1 >= (tm->items_sz / sizeof(item))) {
 		if (!(tm->items = realloc(tm->items, (tm->items_sz += BUFSIZ))))
 			die("cannot realloc %u bytes:", tm->items_sz);
+  }
 
   memset(&tm->items[tm->items_ln], 0, sizeof(item));
 	return &tm->items[tm->items_ln++];
@@ -30,8 +31,9 @@ void read_input(tmenu *tm, char *inpt) {
   while (getline(&line, &len, fin) != -1) {
     item = itemnew(tm);
     str_rtrim(line);
-		if (!(item->key = strdup(line)))
-			die("cannot strdup %u bytes:", strlen(line) + 1);
+    if (!(item->key = strdup(line)))
+        die("cannot strdup %u bytes:", strlen(line) + 1);
+		// item->key = line;
   }
 }
 
@@ -39,8 +41,9 @@ void read_json(tmenu *tm, const char *path)
 {
 	json_error_t jerr;
 
-	if (!(tm->json = json_load_file(path, 0, &jerr)))
+	if (!(tm->json = json_load_file(path, 0, &jerr))) {
 		die("%s @ line: %i - %s", jerr.text, jerr.line, path);
+  }
 
   listjson(tm, tm->json);
 }
@@ -59,8 +62,6 @@ void listjson(tmenu *tm, json_t *obj)
 		iter = json_object_iter_next(obj, iter);
 	}
 }
-
-
 
 void strlwr(char *str) {
   for(; *str; ++str)
@@ -86,7 +87,7 @@ void list_matches(tmenu *tm) {
 
   int i=page*rows , *idx = tm->matches+i;
 
-  item *item, *last;
+  item *item;
 
   for (; i < tm->matches_count && i < (page+1)*rows; ++i, ++idx) {
     item = tm->items + *idx;
@@ -102,7 +103,6 @@ void list_matches(tmenu *tm) {
     } else {
       fprintf(stdout, "%.*s\n", tm->out_cols, item->key);
     }
-    last = item;
   }
 
   // Reset at the end
@@ -132,13 +132,36 @@ void draw_screen(tmenu *tm) {
 void update_matches(tmenu *tm) {
   int j=0, i=0;
   item *item = tm->items;
-  char *(*_strcmp)(const char *, const char *);
-  _strcmp = tm->op.ignore_case ? &strcasestr : strstr;
+  char *(*_strstr)(const char *, const char *);
+  _strstr = tm->op.ignore_case ? &strcasestr : strstr;
+
+  static char **tokv;
+	static int tokn = 0;
+  int tokc = 0;
+
+	char *buf = malloc(sizeof(char) * tm->key_len), *s;
+	strcpy(buf, tm->key);
+
+	/* separate input text into tokens to be matched individually */
+	for (s = strtok(buf, " "); s; tokv[tokc - 1] = s, s = strtok(NULL, " ")) {
+		if (++tokc > tokn && !(tokv = realloc(tokv, ++tokn * sizeof *tokv)))
+			die("cannot realloc %u bytes:", tokn * sizeof *tokv);
+  }
 
   for (; i < tm->items_ln; ++i, ++item) {
-    if (item->key && _strcmp(item->key, tm->key))
-      tm->matches[j++] = i;
+    int k = 0;
+		for (; k < tokc; k++) {
+			if (!_strstr(item->key, tokv[k])) 
+				break;
+    }
+    if (k != tokc) /* not all tokens match */
+			continue;
+
+    // if (item->key && _strcmp(item->key, tm->key))
+    tm->matches[j++] = i;
   }
+  free(buf);
+
   tm->matches_count = j;
 }
 
@@ -179,16 +202,9 @@ bool dump_json_value(FILE *sink, json_t *json) {
       case JSON_ARRAY:
           fprintf(sink, "%s\n", json_dumps(json, 0)); return true;
       case JSON_STRING:
-          char *str = json_string_value(json);
-          // char *pch = strstr(str, "%key");
-          // while (*pch = strstr(str, "%key")) {
-          //   fprintf(sink, "%.*s", pch - str, str);
-          //   fprintf(sink, "%s", tm->key); // This is pretty bad
-          //   str = pch + 4;
-          // }
           fprintf(sink, "%s\n", json_string_value(json)); return true;
       case JSON_INTEGER:
-          fprintf(sink, "%d\n", json_integer_value(json)); return true;
+          fprintf(sink, "%lld\n", json_integer_value(json)); return true;
       case JSON_REAL:
           fprintf(sink, "%f\n", json_real_value(json)); return true;
       case JSON_TRUE:
@@ -222,10 +238,6 @@ void set_sel(tmenu *tm, int index) {
         tm->sel = tm->matches_count-1;
     else
         tm->sel = index;
-    // if (index < 0 || index > tm->matches_count-1)
-    //     tm->sel = tm->matches[tm->matches_count-1];
-    // else
-    //     tm->sel = tm->matches[index];
 
     draw_screen(tm);
 }
@@ -263,7 +275,10 @@ int main_loop(tmenu *tm) {
     switch (c) {
       case '\x1b': // Escape
         c = getc(stdin);
-        if (c == '\x1b') return 0; // Quit on double escape
+        if (c == '\x1b') { // Quit on double escape
+            tmenu_close(tm);
+            return 0; 
+        }
         else if(c == '[') { // Escape sequence
           c = getc(stdin);
 
@@ -285,7 +300,8 @@ int main_loop(tmenu *tm) {
               }
           }
           // fprintf(tm->out, "%d", modifyer);
-
+        
+          int rows;
           switch(c) { // TODO: handle escape sequences properly
             case 'A':  // Arrow Up
                 move_sel(tm, -1); continue;
@@ -305,7 +321,7 @@ int main_loop(tmenu *tm) {
                 write_results(tm);
                 return 0;
             case '~':
-                int rows = tm->out_rows - 2;
+                rows = tm->out_rows - 2;
                 // TODO: page function;
                 switch (keycode) {
                     case 3: // delete

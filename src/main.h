@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "color.h"
 
+// Here there should be a comment
 typedef struct options {
   char *prgname;
 

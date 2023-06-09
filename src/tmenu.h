@@ -44,14 +44,31 @@ typedef struct tmenu_data {
     json_t *json;
     int jsondepth;
 
+#ifdef DEBUG_LOG
+    FILE *debug_log;
+    
+#endif
 
     char *key;
     int key_len;
 } tmenu;
 
+#ifdef DEBUG_LOG
+    #define dlog(tm, format, ...) \
+        do { \
+            fprintf(tm->debug_log, format, ##__VA_ARGS__); \
+            fflush(tm->debug_log); \
+        } while(0)
+#else
+    #define dlog(tm, format, ...) \
+        do { \
+        } while(0)
+#endif
+
 
 item *itemnew(tmenu *tm);
 void read_input(tmenu *tm, char *inpt);
+void read_json(tmenu *tm, const char *path);
 
 void listjson(tmenu *tm, json_t *obj);
 
@@ -64,7 +81,7 @@ void del_ch(tmenu *tm, int index);
 
 void set_sel(tmenu *tm, int index);
 
-int main_loop();
+int main_loop(tmenu *tm);
 
 // StrList read_input(char *inpt);
 void push_result(tmenu *tm);

@@ -24,8 +24,8 @@ RFLAGS="$STD $DEFS -O3"
 DST="/usr"
 
 
-
 debug() {
+  [ -a "$DEBUG_LOG" ] && DFLAGS="$DFLAGS -DDEBUG_LOG=\"$DEBUG_LOG\""
   $CC $DFLAGS -o $EXE $SRC \
     || exit 1
   echo "Build debug complete!"
@@ -59,8 +59,21 @@ usage() {
     echo "    clean         deleting build files"
 }
 
+# Read arguments
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+case $1 in
+    --debug-log) DEBUG_LOG="$2"; shift ;;
+    -h|--help) _usage; exit 0 ;;
+    --) shift; break ;;
+    -*) echo "Invalid option '$1'" > /dev/stderr; exit 1 ;;
+    *) POSITIONAL+=("$1") ;;
+esac; shift;
+done
+set -- "$@${POSITIONAL[@]}"
+
 set -e
-if [ -z "$1" ]; then 
+if [ -z "$1" ]; then
     debug
 else
   case "$1" in
