@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -67,8 +68,7 @@ int main(int argc, char **argv) {
   argc = flag_rest_argc();
 
   if (!(*argv)) {
-    fprintf(stderr, "%s\n\n", "ERROR: Not enough arguments!");
-    usage(stderr, tm.op.prgname);
+    fprintf(stderr, "%s\n", "ERROR: Not enough arguments! (see -h)");
     exit(1);
   }
 

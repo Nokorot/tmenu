@@ -54,6 +54,7 @@ char       *flag_name(void *val);
 bool       *flag_bool(const char *name, char char_name, const char *desc);
 uint64_t   *flag_uint64(const char *name, uint64_t def, const char *desc);
 size_t     *flag_size(const char *name, uint64_t def, const char *desc);
+char       *flag_char(const char *name, char def, const char *desc);
 char      **flag_str(const char *name, const char *def, const char *desc);
 
 void        flag_set_variant(void *val, const char *variant);
@@ -77,12 +78,14 @@ typedef enum {
     FLAG_UINT64,
     FLAG_SIZE,
     FLAG_STR,
+    FLAG_CHAR,
     COUNT_FLAG_TYPES,
 } Flag_Type;
 
-static_assert(COUNT_FLAG_TYPES == 4, "Exhaustive Flag_Value definition");
+static_assert(COUNT_FLAG_TYPES == 5, "Exhaustive Flag_Value definition");
 typedef union {
     char *as_str;
+    char as_char;
     uint64_t as_uint64;
     bool as_bool;
     size_t as_size;
@@ -93,6 +96,7 @@ typedef enum {
     FLAG_ERROR_UNKNOWN,
     FLAG_ERROR_UNKNOWN_CHAR,
     FLAG_ERROR_NO_VALUE,
+    FLAG_ERROR_INVALID_CHAR,
     FLAG_ERROR_INVALID_NUMBER,
     FLAG_ERROR_INTEGER_OVERFLOW,
     FLAG_ERROR_INVALID_SIZE_SUFFIX,
@@ -123,6 +127,7 @@ typedef struct {
 
     Flag_Error flag_error;
     char *flag_error_name;
+    char *flag_error_value;
 
     int rest_argc;
     char **rest_argv;
@@ -212,6 +217,14 @@ size_t *flag_size(const char *name, uint64_t def, const char *desc)
     return &flag->val.as_size;
 }
 
+char *flag_char(const char *name, char def, const char *desc)
+{
+    Flag *flag = flag_new(FLAG_CHAR, name, desc);
+    flag->val.as_char = def;
+    flag->def.as_char = def;
+    return &flag->val.as_char;
+}
+
 char **flag_str(const char *name, const char *def, const char *desc)
 {
     Flag *flag = flag_new(FLAG_STR, name, desc);
@@ -293,10 +306,27 @@ bool flag_parse(int argc, char **argv)
             return false;
         }
 
-        static_assert(COUNT_FLAG_TYPES == 4, "Exhaustive flag type parsing");
+        static_assert(COUNT_FLAG_TYPES == 5, "Exhaustive flag type parsing");
         switch (flag->type) {
         case FLAG_BOOL: {
             flag->val.as_bool = true;
+        }
+        break;
+
+        case FLAG_CHAR: {
+            if (argc == 0) {
+                c->flag_error = FLAG_ERROR_NO_VALUE;
+                c->flag_error_name = arg;
+                return false;
+            }
+            char *value_arg = flag_shift_args(&argc, &argv);
+            if(strlen(value_arg) > 1) {
+                c->flag_error = FLAG_ERROR_INVALID_CHAR;
+                c->flag_error_name = arg;
+                c->flag_error_value = value_arg;
+            }
+
+            flag->val.as_char = *value_arg;
         }
         break;
 
@@ -317,23 +347,25 @@ bool flag_parse(int argc, char **argv)
                 c->flag_error_name = arg;
                 return false;
             }
-            char *arg = flag_shift_args(&argc, &argv);
+            char *value_arg = flag_shift_args(&argc, &argv);
 
             static_assert(sizeof(unsigned long long int) == sizeof(uint64_t), "The original author designed this for x86_64 machine with the compiler that expects unsigned long long int and uint64_t to be the same thing, so they could use strtoull() function to parse it. Please adjust this code for your case and maybe even send the patch to upstream to make it work on a wider range of environments.");
             char *endptr;
             // TODO: replace strtoull with a custom solution
             // That way we can get rid of the dependency on errno and static_assert
-            unsigned long long int result = strtoull(arg, &endptr, 10);
+            unsigned long long int result = strtoull(value_arg, &endptr, 10);
 
             if (*endptr != '\0') {
                 c->flag_error = FLAG_ERROR_INVALID_NUMBER;
                 c->flag_error_name = arg;
+                c->flag_error_value = value_arg;
                 return false;
             }
 
             if (result == ULLONG_MAX && errno == ERANGE) {
                 c->flag_error = FLAG_ERROR_INTEGER_OVERFLOW;
                 c->flag_error_name = arg;
+                c->flag_error_value = value_arg;
                 return false;
             }
 
@@ -347,13 +379,13 @@ bool flag_parse(int argc, char **argv)
                 c->flag_error_name = arg;
                 return false;
             }
-            char *arg = flag_shift_args(&argc, &argv);
+            char *value_arg = flag_shift_args(&argc, &argv);
 
             static_assert(sizeof(unsigned long long int) == sizeof(size_t), "The original author designed this for x86_64 machine with the compiler that expects unsigned long long int and size_t to be the same thing, so they could use strtoull() function to parse it. Please adjust this code for your case and maybe even send the patch to upstream to make it work on a wider range of environments.");
             char *endptr;
             // TODO: replace strtoull with a custom solution
             // That way we can get rid of the dependency on errno and static_assert
-            unsigned long long int result = strtoull(arg, &endptr, 10);
+            unsigned long long int result = strtoull(value_arg, &endptr, 10);
 
             // TODO: handle more multiplicative suffixes like in dd(1). From the dd(1) man page:
             // > N and BYTES may be followed by the following
@@ -370,6 +402,7 @@ bool flag_parse(int argc, char **argv)
             } else if (strcmp(endptr, "") != 0) {
                 c->flag_error = FLAG_ERROR_INVALID_SIZE_SUFFIX;
                 c->flag_error_name = arg;
+                c->flag_error_value = value_arg;
                 // TODO: capability to report what exactly is the wrong suffix
                 return false;
             }
@@ -377,6 +410,7 @@ bool flag_parse(int argc, char **argv)
             if (result == ULLONG_MAX && errno == ERANGE) {
                 c->flag_error = FLAG_ERROR_INTEGER_OVERFLOW;
                 c->flag_error_name = arg;
+                c->flag_error_value = value_arg;
                 return false;
             }
 
@@ -411,7 +445,7 @@ void flag_print_options(FILE *stream)
         else
           fprintf(stream, "      --%s\n", flag->name);
         fprintf(stream, "          %s\n", flag->desc);
-        static_assert(COUNT_FLAG_TYPES == 4, "Exhaustive flag type defaults printing");
+        static_assert(COUNT_FLAG_TYPES == 5, "Exhaustive flag type defaults printing");
         switch (c->flags[i].type) {
         case FLAG_BOOL:
             if (flag->def.as_bool) {
@@ -423,6 +457,9 @@ void flag_print_options(FILE *stream)
             break;
         case FLAG_SIZE:
             fprintf(stream, "        Default: %zu\n", flag->def.as_size);
+            break;
+        case FLAG_CHAR:
+            fprintf(stream, "        Default: %c\n", flag->def.as_char);
             break;
         case FLAG_STR:
             if (flag->def.as_str) {
@@ -439,7 +476,7 @@ void flag_print_options(FILE *stream)
 void flag_print_error(FILE *stream)
 {
     Flag_Context *c = &flag_global_context;
-    static_assert(COUNT_FLAG_ERRORS == 7, "Exhaustive flag error printing");
+    static_assert(COUNT_FLAG_ERRORS == 8, "Exhaustive flag error printing");
     switch (c->flag_error) {
     case FLAG_NO_ERROR:
         // NOTE: don't call flag_print_error() if flag_parse() didn't return false, okay? ._.
@@ -454,14 +491,18 @@ void flag_print_error(FILE *stream)
     case FLAG_ERROR_NO_VALUE:
         fprintf(stream, "ERROR: --%s: no value provided\n", c->flag_error_name);
         break;
+    case FLAG_ERROR_INVALID_CHAR:
+        fprintf(stream, "ERROR: -%s: expect char, got '%s'\n",
+            c->flag_error_name, c->flag_error_value);
+        break;
     case FLAG_ERROR_INVALID_NUMBER:
-        fprintf(stream, "ERROR: -%s: invalid number\n", c->flag_error_name);
+        fprintf(stream, "ERROR: -%s: invalid number, got '%s'\n", c->flag_error_name, c->flag_error_value);
         break;
     case FLAG_ERROR_INTEGER_OVERFLOW:
-        fprintf(stream, "ERROR: -%s: integer overflow\n", c->flag_error_name);
+        fprintf(stream, "ERROR: -%s: integer overflow, got '%s'\n", c->flag_error_name, c->flag_error_value);
         break;
     case FLAG_ERROR_INVALID_SIZE_SUFFIX:
-        fprintf(stream, "ERROR: -%s: invalid size suffix\n", c->flag_error_name);
+        fprintf(stream, "ERROR: -%s: invalid size suffix, got '%s'\n", c->flag_error_name, c->flag_error_value);
         break;
     case COUNT_FLAG_ERRORS:
     default:
