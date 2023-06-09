@@ -52,39 +52,34 @@ int color24_from_hex(char *hex, Color *cl) {
   return 0;
 }
 
-
-
 int getEscCode(Color cl, int mode, char *buff) {
-  char n;
-
   switch (cl.type) {
     case COLOR_4BIT:
 #define AS4 cl.data.as4bit
       if (mode == FOREGROUND_MODE)
-        n = sprintf(buff, "\x1b[%dm", AS4.n + (AS4.bright ? 90 : 30));
+        return sprintf(buff, "\x1b[%dm", AS4.n + (AS4.bright ? 90 : 30));
       else if (mode == BACKGROUND_MODE)
-        n = sprintf(buff, "\x1b[%dm", AS4.n + (AS4.bright ? 100 : 40));
+        return sprintf(buff, "\x1b[%dm", AS4.n + (AS4.bright ? 100 : 40));
       break;
 #undef AS4
     case COLOR_8BIT:
 #define AS8 cl.data.as8bit
       if (mode == FOREGROUND_MODE)
-        n = sprintf(buff, "\x1b[38;5;%dm", AS8.n);
+        return sprintf(buff, "\x1b[38;5;%dm", AS8.n);
       else if (mode == BACKGROUND_MODE)
-        n = sprintf(buff, "\x1b[48;5;%dm", AS8.n);
+        return sprintf(buff, "\x1b[48;5;%dm", AS8.n);
       break;
 #undef AS8
     case COLOR_24BIT:
 #define AS24 cl.data.as24bit
       if (mode == FOREGROUND_MODE)
-        n = sprintf(buff, "\x1b[38;2;%d;%d;%dm", AS24.r, AS24.g, AS24.b);
+        return sprintf(buff, "\x1b[38;2;%d;%d;%dm", AS24.r, AS24.g, AS24.b);
       else if (mode == BACKGROUND_MODE)
-        n = sprintf(buff, "\x1b[48;2;%d;%d;%dm", AS24.r, AS24.g, AS24.b);
+        return sprintf(buff, "\x1b[48;2;%d;%d;%dm", AS24.r, AS24.g, AS24.b);
       break;
 #undef AS24
   }
-
-  return n;
+  return '\0';
 }
 
 

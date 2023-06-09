@@ -1,9 +1,10 @@
 #ifndef STRUTIL_H__
 #define STRUTIL_H__
 
+#include "stdbool.h"
 #include <string.h>
 
-_Bool str_contains(char *str, char c);
+bool str_contains(char *str, char c);
 
 void str_rtrim(char *str);
 

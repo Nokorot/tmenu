@@ -1,9 +1,8 @@
 
 #include "strutil.h"
-
 #include <string.h>
 
-_Bool str_contains(char *str, char c) {
+bool str_contains(char *str, char c) {
   for (int ch = *str; (ch = *(str++));)
     if (ch == c) return 1;
   return 0;

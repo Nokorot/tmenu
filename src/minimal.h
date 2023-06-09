@@ -6,7 +6,7 @@
 
 /* Restore terminal to original settings
 */
-void terminal_done();
+void terminal_done(void);
 
 /* "Default" signal handler: restore terminal, then exit.
 */

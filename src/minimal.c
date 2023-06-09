@@ -10,7 +10,7 @@ struct termios terminal_settings;
 
 int terminal_descriptor = -1;
 
-void terminal_done() {
+void terminal_done(void) {
   printf("%s", "\x1B[\?1049l");
   if (terminal_descriptor != -1)
       tcsetattr(terminal_descriptor, TCSANOW, &terminal_original);
@@ -28,7 +28,7 @@ void terminal_signal(int signum) {
     _exit(128 + signum);
 }
 
-int terminal_init() {
+int terminal_init(void) {
     struct sigaction act;
 
     // TODO: See if this needs to be moved. A bit of abrstraction would be nice
