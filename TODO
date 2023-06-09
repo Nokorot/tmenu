@@ -1,26 +1,27 @@
 
+- the token separator ' ', should be possible to change with a flag
+
 -  Allow for free writing
 
 - Json Config file
 - Json Source file
 
-- !!! Realy need to use a beter data structure for StrList
+- !!! Really need to use a better data structure for StrList
 
 Note:
 If tmenu outputs the current content of the entry at each key press,
-the list could be adjuted acording to what is written. This could be
+the list could be adjusted according to what is written. This could be
 used for more advanced autocompletion.
     For example:  new with names like anything_%date,
-    where anythng_%date is added to the list when the % sign is added
-In this case a clear signal might be usefull and/or a (-r) remove pipe/file.
+    where anything_%date is added to the list when the % sign is added
+In this case a clear signal might be useful and/or a (-r) remove pipe/file.
 
 This would also requite, the input file to be read, on a different thread or
 checked each time a character is entered.
-# Alternativly:
+# Alternatively:
     Generate, generate these inside tmenu.
-    Some regex expresion. ".*%{date, time, ...}"
+    Some regex expression. ".*%{date, time, ...}"
     Would go well with json
-
 
 # Needs to be done and Ideas
 
@@ -29,25 +30,25 @@ checked each time a character is entered.
 - Free writing result.
 - Following multi select
         That is, the lines are push when selected and removed from the list.
-        (Removing could also be an option, but then there most be some virsual indication of what has been pushed).
-        This allows the resiving program to act on the selected line in paralell.
-        But deselecting lines makes no sense anymore.
+        (Removing could also be an option, but then there most be some visual indication of what has been pushed).
+        This allows the receiving program to act on the selected line in parallel.
+        But deselecting lines makes no sense any more.
 
-- Flag for conformation
-        convinient in the case of multiselect
-- Redraw only what is nessesary
+- Flag for commit/quit conformation
+        convenient in the case of multi-select
+- Redraw only what is necessary
 - Handle changing terminal size
 - Capture Ctrl-C and Ctrl-Z
 - Page up / Page Down, End / Home
-- Vim keys (when holding alt) / Emacs key
+- Vim keys (when holding Alt) / Emacs key
 - Configuration file
 - Capture Unicode chars
 
 
 
-# Partaly done
-- Dont overflow the selection, ie. move the selection when sel > #lines
-- Color flag: Needs some clean up
+# Partly done
+- Don't overflow the selection, i.e. move the selection when sel > #lines
+- Colour flag: Needs some clean up
 
 # Done:
 - Prompt

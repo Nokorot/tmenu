@@ -109,7 +109,7 @@ void list_matches(tmenu *tm) {
   fprintf(stdout, "\x1b[0m");
 }
 
-// TODO: dirty paramenter
+// TODO: dirty parameter
 void draw_screen(tmenu *tm) {
   if (tm->op.pv) {
     fprintf(tm->op.pv, "%s\n", cur_sel(tm)->key);
@@ -118,7 +118,7 @@ void draw_screen(tmenu *tm) {
 
   printf("%s", "\x1b[2J"); // Clear screen
 
-  // TODO: remember corsor position. Might want to allow left and right movement
+  // TODO: remember cursor position. Might want to allow left and right movement
   printf("%s", "\x1b[2;1H");
   list_matches(tm);
 
@@ -157,7 +157,6 @@ void update_matches(tmenu *tm) {
     if (k != tokc) /* not all tokens match */
 			continue;
 
-    // if (item->key && _strcmp(item->key, tm->key))
     tm->matches[j++] = i;
   }
   free(buf);
